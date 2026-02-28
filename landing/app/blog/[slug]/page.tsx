@@ -13,8 +13,10 @@ const imageMap: Record<string, string> = {
   'ai-code-debt-tsunami': '/series-1-the-ai-code-debt-tsunami.png',
   'invisible-codebase': '/series-2-invisible-to-ai.png',
   'metrics-that-actually-matter': '/series-3-metrics-that-matters.png',
-  'semantic-duplicate-detection': '/series-4-sementic-duplicate-detection.png',
+  'semantic-duplicate-detection': '/series-4-semantic-duplicate-detection.png',
   'hidden-cost-import-chains': '/series-5-hidden-cost-import-chains.png',
+  'visualizing-invisible': '/series-6-visualise-invisible-debt.png',
+  'future-human-friendly-code': '/part-7-future-human-friendly-code.png',
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

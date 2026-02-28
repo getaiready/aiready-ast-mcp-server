@@ -40,7 +40,7 @@ return email.search('@') >= 0 && email.search('.') >= 0;`}</CodeBlock>
 
     <div className="my-12 max-w-2xl mx-auto">
       <img
-        src="/series-4-sementic-duplicate-detection.png"
+        src="/series-4-semantic-duplicate-detection.png"
         alt="Semantic Duplicate Detection - How AI keeps rewriting the same logic in different ways"
         className="rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 w-full"
       />
