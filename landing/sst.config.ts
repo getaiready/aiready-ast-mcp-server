@@ -95,6 +95,15 @@ export default $config({
       },
     });
 
+    // VS Code Marketplace publisher verification
+    sst.cloudflare.dns({
+      zone: '50eb7dcadc84c58ab34583742db0b671',
+    }).createRecord('VSCodeMarketplaceVerification', {
+      type: 'TXT',
+      name: '_visual-studio-marketplace-pengcao',
+      value: 'e5370864-bedf-4b65-9ef4-a99596a60d7d',
+    }, {});
+
     return {
       site: site.url,
       apiUrl: api.url,
