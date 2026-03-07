@@ -199,7 +199,12 @@ release-platform: ## Release platform: TYPE=patch|minor|major
 	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
 	$(call log_success,Version bump complete for @aiready/platform); \
 	$(call commit_and_tag_platform); \
-	$(call log_step,Running platform tests before release...); \
+	$(call log_step,Running fullest range of tests for platform production release...); \
+	$(MAKE) -C $(ROOT_DIR) build || exit 1; \
+	CI=1 $(MAKE) -C $(ROOT_DIR) test || exit 1; \
+	CI=1 $(MAKE) -C $(ROOT_DIR) test-contract || exit 1; \
+	CI=1 $(MAKE) -C $(ROOT_DIR) test-integration || exit 1; \
+	CI=1 $(MAKE) -C $(ROOT_DIR) test-verify-cli || exit 1; \
 	CI=1 $(MAKE) -C $(ROOT_DIR) test-platform || exit 1; \
 	CI=1 $(MAKE) -C $(ROOT_DIR) test-platform-e2e-local || exit 1; \
 	$(call log_step,Building and deploying platform to production...); \
@@ -386,10 +391,11 @@ release-all: ## Release all spokes: TYPE=patch|minor|major (excludes landing)
 
 # Status overview: local vs published versions
 
-release-dev: ## Full dev deploy workflow: Build + Unit test + Deploy dev + Plawright e2e tests
+release-dev: ## Full dev deploy workflow: Build + Unit test + Contract test + Deploy dev + Plawright e2e tests
 	@$(call log_step,Starting dev release pipeline...)
 	@$(MAKE) -C $(ROOT_DIR) build || exit 1
 	@$(MAKE) -C $(ROOT_DIR) test || exit 1
+	@$(MAKE) -C $(ROOT_DIR) test-contract || exit 1
 	@$(MAKE) -C $(ROOT_DIR) deploy-platform || exit 1
 	@$(call tag_platform_dev)
 	@$(call log_step,Running Platform E2E tests against Dev endpoint...)

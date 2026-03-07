@@ -154,21 +154,7 @@ export default $config({
       timeout: '15 minutes',
       memory: '2048 MB',
       nodejs: {
-        install: [
-          'isomorphic-git',
-          'http',
-          '@aiready/cli',
-          '@aiready/core',
-          '@aiready/pattern-detect',
-          '@aiready/context-analyzer',
-          '@aiready/consistency',
-          '@aiready/ai-signal-clarity',
-          '@aiready/agent-grounding',
-          '@aiready/testability',
-          '@aiready/doc-drift',
-          '@aiready/deps',
-          '@aiready/change-amplification',
-        ],
+        install: ['isomorphic-git', 'http'],
       },
       link: [table, bucket, scanQueue],
       environment: {
