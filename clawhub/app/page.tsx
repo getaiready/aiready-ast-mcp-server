@@ -75,19 +75,18 @@ export default function ClawHubPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="relative pt-32 pb-48 overflow-hidden border-b border-white/5">
-        {/* Cinematic Background Image - OPTIMIZED FOR READABILITY */}
+        {/* Cinematic Background Image - RESTORED VISIBILITY */}
         <div className="absolute inset-0 -z-10 bg-[#0a0a0a]">
           <Image
             src="/hero.png"
             alt="Hero Background"
             fill
-            className="object-cover opacity-50 brightness-[0.7] saturate-[0.8]"
+            className="object-cover opacity-80 transition-opacity duration-1000"
             priority
           />
-          {/* Subtle radial mask to clear area for text */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(10,10,10,0.7)_0%,_#0a0a0a_80%)]" />
+          {/* Subtle radial mask to clear area for text - lightened */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(10,10,10,0.4)_0%,_#0a0a0a_90%)]" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
         </div>
 
