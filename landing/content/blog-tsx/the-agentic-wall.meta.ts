@@ -15,10 +15,7 @@ const meta = {
   ],
   readingTime: '5 min read',
   slug: 'the-agentic-wall',
-  cover: '',
-  ogImage: '',
   cover: '/agentic-shift-series-1.png',
-  ogImage: '',
   ogImage: '',
 };
 

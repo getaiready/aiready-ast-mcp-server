@@ -17,5 +17,4 @@ export default {
     'Jaccard Similarity',
   ],
   readingTime: '15 min read',
-  ogImage: '/series-4-sementic-duplicate-detection.png',
 };

@@ -14,12 +14,8 @@ const meta = {
   ],
   readingTime: '7 min read',
   slug: 'cognitive-tiering',
-  cover: '',
+  cover: '/agentic-shift-series-4.png',
   ogImage: '',
-  cover: '/agentic-shift-series-6.png',
-  ogImage: '',
-  ogImage: '',
-  ogImage: '/agentic-shift-series-6.png',
 };
 
 export default meta;

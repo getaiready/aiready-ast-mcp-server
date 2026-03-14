@@ -15,5 +15,4 @@ export default {
     'Refactoring',
   ],
   readingTime: '16 min read',
-  ogImage: '/series-5-hidden-cost-import-chains.png',
 };

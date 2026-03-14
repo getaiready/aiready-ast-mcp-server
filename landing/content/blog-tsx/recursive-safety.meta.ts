@@ -14,12 +14,8 @@ const meta = {
   ],
   readingTime: '6 min read',
   slug: 'recursive-safety',
-  cover: '',
+  cover: '/agentic-shift-series-6.png',
   ogImage: '',
-  cover: '/agentic-shift-series-10.png',
-  ogImage: '',
-  ogImage: '',
-  ogImage: '/agentic-shift-series-10.png',
 };
 
 export default meta;

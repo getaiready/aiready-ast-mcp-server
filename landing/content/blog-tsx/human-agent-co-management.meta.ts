@@ -13,12 +13,8 @@ const meta = {
   ],
   readingTime: '6 min read',
   slug: 'human-agent-co-management',
-  cover: '',
+  cover: '/agentic-shift-series-11.png',
   ogImage: '',
-  cover: '/agentic-shift-series-9.png',
-  ogImage: '',
-  ogImage: '',
-  ogImage: '/agentic-shift-series-9.png',
 };
 
 export default meta;

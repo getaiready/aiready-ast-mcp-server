@@ -13,12 +13,8 @@ const meta = {
   ],
   readingTime: '6 min read',
   slug: 'resilience-fortress',
-  cover: '',
+  cover: '/agentic-shift-series-12.png',
   ogImage: '',
-  cover: '/agentic-shift-series-7.png',
-  ogImage: '',
-  ogImage: '',
-  ogImage: '/agentic-shift-series-7.png',
 };
 
 export default meta;
