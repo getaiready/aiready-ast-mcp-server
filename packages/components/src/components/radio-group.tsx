@@ -1,11 +1,8 @@
 import * as React from 'react';
 import { cn } from '../utils/cn';
+import { ComponentOption } from '../types';
 
-export interface RadioOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
+export type RadioOption = ComponentOption;
 
 export interface RadioGroupProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,

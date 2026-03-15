@@ -1,11 +1,8 @@
 import * as React from 'react';
 import { cn } from '../utils/cn';
+import { ComponentOption } from '../types';
 
-export interface SelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
+export type SelectOption = ComponentOption;
 
 export interface SelectProps extends Omit<
   React.SelectHTMLAttributes<HTMLSelectElement>,

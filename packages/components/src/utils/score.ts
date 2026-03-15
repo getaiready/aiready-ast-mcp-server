@@ -43,6 +43,8 @@ export function scoreGlow(score: number | null | undefined): string {
   return 'shadow-red-500/20';
 }
 
+import { getRatingSlug } from '@aiready/core/client';
+
 /**
  * Get rating from score (for use with ScoreBar component)
  */
@@ -50,9 +52,6 @@ export function getScoreRating(
   score: number | null | undefined
 ): 'excellent' | 'good' | 'fair' | 'needs-work' | 'critical' {
   if (score == null) return 'critical';
-  if (score >= 90) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 60) return 'fair';
-  if (score >= 40) return 'needs-work';
-  return 'critical';
+  // Use core implementation to resolve duplication
+  return getRatingSlug(score) as any;
 }

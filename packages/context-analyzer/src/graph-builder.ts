@@ -1,4 +1,4 @@
-import { estimateTokens, parseFileExports } from '@aiready/core';
+import { estimateTokens, parseFileExports, FileContent } from '@aiready/core';
 import { singularize } from './utils/string-utils';
 import {
   calculateImportDepthFromEdges,
@@ -13,11 +13,6 @@ import {
 } from './semantic-analysis';
 import { extractExportsWithAST } from './ast-utils';
 import { join, dirname, normalize } from 'path';
-
-interface FileContent {
-  file: string;
-  content: string;
-}
 
 /**
  * Resolve an import source to its absolute path considering the importing file's location

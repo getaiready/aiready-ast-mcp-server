@@ -4,6 +4,9 @@ import type { ContextAnalyzerOptions } from './types';
 /**
  * Generate smart defaults for context analysis based on repository size
  * Automatically tunes thresholds to target ~10 most serious issues
+ * @param directory - The root directory to analyze
+ * @param userOptions - Partial user-provided options to merge with defaults
+ * @returns Complete ContextAnalyzerOptions with smart defaults
  */
 export async function getSmartDefaults(
   directory: string,

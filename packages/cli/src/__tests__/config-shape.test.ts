@@ -76,7 +76,6 @@ describe('CLI Configuration Shape', () => {
       rootDir: '/test',
       tools: [ToolName.PatternDetect],
       useSmartDefaults: true,
-      // @ts-expect-error - testing internal key stripping
       batchSize: 50,
     });
 

@@ -80,6 +80,8 @@ export function groupDuplicatesByFilePair(
 /**
  * Create clusters of highly related files (refactor targets)
  * Uses a simple connected components algorithm
+ * @param duplicates - Array of duplicate patterns to cluster
+ * @returns Array of refactor clusters
  */
 export function createRefactorClusters(
   duplicates: DuplicatePattern[]
@@ -186,6 +188,10 @@ function determineClusterName(files: string[]): string {
 
 /**
  * Filter clusters by impact threshold
+ * @param clusters - Array of refactor clusters to filter
+ * @param minTokenCost - Minimum token cost threshold (default: 1000)
+ * @param minFiles - Minimum number of files in cluster (default: 3)
+ * @returns Filtered array of refactor clusters
  */
 export function filterClustersByImpact(
   clusters: RefactorCluster[],

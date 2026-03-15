@@ -92,7 +92,8 @@ export default function BlogPost() {
       '@type': 'Person',
       name: 'Minimalist Architect',
     },
-    image: 'https://clawmore.getaiready.dev/blog-assets/one-dollar-ai-agent.png',
+    image:
+      'https://clawmore.getaiready.dev/blog-assets/one-dollar-ai-agent.png',
     url: 'https://clawmore.getaiready.dev/blog-assets/one-dollar-ai-agent',
   };
 

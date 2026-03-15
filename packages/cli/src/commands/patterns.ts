@@ -86,7 +86,9 @@ export async function patternsAction(
     const { analyzePatterns, generateSummary, calculatePatternScore } =
       await import('@aiready/pattern-detect');
 
-    const { results, duplicates } = await analyzePatterns(finalOptions);
+    const { results, duplicates } = (await analyzePatterns(
+      finalOptions
+    )) as any;
 
     const elapsedTime = getElapsedTime(startTime);
     const summary = generateSummary(results);

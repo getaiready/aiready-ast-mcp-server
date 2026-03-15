@@ -5,6 +5,8 @@ import type { NamingIssue } from '../types';
 /**
  * Legacy regex-based naming analyzer
  * (Used as fallback or for languages without AST support)
+ * @param filePaths - Array of file paths to analyze
+ * @returns Array of naming issues found
  */
 export async function analyzeNaming(
   filePaths: string[]

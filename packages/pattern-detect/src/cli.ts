@@ -12,13 +12,10 @@ import {
   mergeConfigWithDefaults,
   resolveOutputPath,
   Severity,
-} from '@aiready/core';
-import {
-  getPatternIcon,
-  generateHTMLReport,
   getSeverityBadge,
   getSeverityValue,
-} from './cli-output';
+} from '@aiready/core';
+import { getPatternIcon, generateHTMLReport } from './cli-output';
 
 const program = new Command();
 

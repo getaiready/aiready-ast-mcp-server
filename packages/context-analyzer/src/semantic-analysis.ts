@@ -9,6 +9,8 @@ import { singularize } from './utils/string-utils';
 
 /**
  * Build co-usage matrix: track which files are imported together
+ * @param graph - The dependency graph to analyze
+ * @returns Map of file to co-usage counts
  */
 export function buildCoUsageMatrix(
   graph: DependencyGraph
@@ -39,6 +41,8 @@ export function buildCoUsageMatrix(
 
 /**
  * Extract type dependencies from AST exports
+ * @param graph - The dependency graph to analyze
+ * @returns Map of type references to files that use them
  */
 export function buildTypeGraph(
   graph: DependencyGraph
@@ -61,6 +65,9 @@ export function buildTypeGraph(
 
 /**
  * Find semantic clusters using co-usage patterns
+ * @param coUsageMatrix - The co-usage matrix from buildCoUsageMatrix
+ * @param minCoUsage - Minimum co-usage count to consider (default: 3)
+ * @returns Map of cluster representative files to their cluster members
  */
 export function findSemanticClusters(
   coUsageMatrix: Map<string, Map<string, number>>,

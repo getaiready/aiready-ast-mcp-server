@@ -4,6 +4,7 @@ import {
   DEFAULT_COST_CONFIG,
   type CostConfig,
   ToolName,
+  getRatingSlug,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import type { ContextSummary } from './types';
@@ -190,9 +191,6 @@ export function calculateContextScore(
 }
 
 export function mapScoreToRating(score: number): string {
-  if (score >= 90) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 60) return 'fair';
-  if (score >= 40) return 'needs work';
-  return 'critical';
+  // Use core implementation to resolve duplication
+  return getRatingSlug(score).replace('-', ' ');
 }

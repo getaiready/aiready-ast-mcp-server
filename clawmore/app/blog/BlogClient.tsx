@@ -53,7 +53,8 @@ const BLOG_POSTS = [
     readTime: '7 min read',
     hash: 'cdkmono',
     category: 'INFRASTRUCTURE',
-    image: 'https://clawmore.getaiready.dev/blog-assets/cdk-monorepo-mastery.png',
+    image:
+      'https://clawmore.getaiready.dev/blog-assets/cdk-monorepo-mastery.png',
   },
   {
     slug: 'omni-channel-ai-gateway',
@@ -64,7 +65,8 @@ const BLOG_POSTS = [
     readTime: '8 min read',
     hash: 'omnichan',
     category: 'INTEGRATIONS',
-    image: 'https://clawmore.getaiready.dev/blog-assets/omni-channel-ai-gateway.png',
+    image:
+      'https://clawmore.getaiready.dev/blog-assets/omni-channel-ai-gateway.png',
   },
   {
     slug: 'bridge-pattern-ephemeral-persistent',
@@ -123,7 +125,8 @@ const BLOG_POSTS = [
     readTime: '5 min read',
     hash: '1dollarai',
     category: 'INFRASTRUCTURE',
-    image: 'https://clawmore.getaiready.dev/blog-assets/one-dollar-ai-agent.png',
+    image:
+      'https://clawmore.getaiready.dev/blog-assets/one-dollar-ai-agent.png',
   },
 ];
 

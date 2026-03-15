@@ -1,80 +1,91 @@
-import chalk from 'chalk';
-import type { PatternType } from './detector';
-import { Severity } from '@aiready/core';
+import { Severity, getSeverityBadge, getSeverityValue } from '@aiready/core';
 
 /**
  * Get icon for pattern type
  */
-export function getPatternIcon(type: PatternType): string {
-  const icons: Record<PatternType, string> = {
-    'api-handler': '🌐',
-    validator: '✓',
-    utility: '🔧',
-    'class-method': '📦',
-    component: '⚛️',
-    function: 'ƒ',
+export function getPatternIcon(type: string): string {
+  const icons: Record<string, string> = {
+    'api-handler': '🔌',
+    validator: '🛡️',
+    utility: '⚙️',
+    'class-method': '🏛️',
+    component: '🧩',
+    function: '𝑓',
     unknown: '❓',
   };
-  return icons[type];
+  return icons[type] || icons.unknown;
 }
 
 /**
- * Generate HTML report for pattern detection results
+ * HTML report generator for pattern detection results
  */
-export function generateHTMLReport(summary: any, results: any[]): string {
+export function generateHTMLReport(results: any, summary?: any): string {
+  // Handle both single-argument and legacy two-argument calls
+  const data = summary
+    ? { results, summary, metadata: { version: '0.11.22' } }
+    : results;
+  const { results: duplicates, summary: reportSummary, metadata } = data;
+
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Pattern Detection Report</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIReady - Pattern Detection Report</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 40px; background: #f5f5f5; }
-    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    h1 { color: #333; border-bottom: 3px solid #007acc; padding-bottom: 10px; }
-    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
-    .stat-card { background: #f9f9f9; padding: 20px; border-radius: 6px; border-left: 4px solid #007acc; }
-    .stat-value { font-size: 32px; font-weight: bold; color: #007acc; }
-    .stat-label { color: #666; font-size: 14px; text-transform: uppercase; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
-    th { background: #f5f5f5; font-weight: 600; }
-    .critical { color: #d32f2f; }
-    .major { color: #f57c00; }
-    .minor { color: #1976d2; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 2rem; background-color: #f9f9f9; }
+    h1, h2 { color: #1a1a1a; border-bottom: 2px solid #eaeaea; padding-bottom: 0.5rem; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; border: 1px solid #eaeaea; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid #eaeaea; }
+    .stat-value { font-size: 1.8rem; font-weight: bold; color: #2563eb; }
+    .stat-label { font-size: 0.875rem; color: #666; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 4px; overflow: hidden; }
+    th, td { text-align: left; padding: 0.875rem 1rem; border-bottom: 1px solid #eaeaea; }
+    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
+    tr:last-child td { border-bottom: none; }
+    .critical { color: #dc2626; font-weight: bold; }
+    .major { color: #ea580c; font-weight: bold; }
+    .minor { color: #2563eb; }
+    code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.875rem; color: #334155; }
+    .footer { margin-top: 4rem; text-align: center; color: #94a3b8; font-size: 0.875rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🔍 Pattern Detection Report</h1>
-    <p>Generated: ${new Date().toLocaleString()}</p>
-    
-    <div class="summary">
-      <div class="stat-card">
-        <div class="stat-value">${results.length}</div>
-        <div class="stat-label">Files Analyzed</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">${summary.totalPatterns}</div>
-        <div class="stat-label">Duplicate Patterns</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">${summary.totalTokenCost.toLocaleString()}</div>
-        <div class="stat-label">Tokens Wasted</div>
-      </div>
-    </div>
+  <h1>Pattern Detection Report</h1>
+  <div class="stat-card" style="margin-bottom: 2rem;">
+    <div class="stat-label">AI Ready Score (Deduplication)</div>
+    <div class="stat-value">${Math.max(0, 100 - Math.round(((summary.duplicates?.length || 0) / (summary.totalFiles || 1)) * 20))}%</div>
+  </div>
 
-    <h2>Top Duplicate Patterns</h2>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value">${summary.totalFiles}</div>
+      <div class="stat-label">Files Analyzed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${summary.duplicates?.length || 0}</div>
+      <div class="stat-label">Duplicate Clusters</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${summary.totalIssues}</div>
+      <div class="stat-label">Total Issues</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Duplicate Patterns</h2>
     <table>
       <thead>
         <tr>
           <th>Similarity</th>
           <th>Type</th>
-          <th>Files</th>
-          <th>Token Cost</th>
+          <th>Locations</th>
+          <th>Tokens Wasted</th>
         </tr>
       </thead>
       <tbody>
-        ${summary.topDuplicates
-          .slice(0, 20)
+        ${(summary.duplicates || [])
           .map(
             (dup: any) => `
           <tr>
@@ -91,7 +102,7 @@ export function generateHTMLReport(summary: any, results: any[]): string {
   </div>
 
   <div class="footer">
-    <p>Generated by <strong>@aiready/pattern-detect</strong></p>
+    <p>Generated by <strong>@aiready/pattern-detect</strong> v${metadata.version}</p>
     <p>Like AIReady? <a href="https://github.com/caopengau/aiready-pattern-detect">Star us on GitHub</a></p>
     <p>Found a bug? <a href="https://github.com/caopengau/aiready-pattern-detect/issues">Report it here</a></p>
   </div>
@@ -99,32 +110,5 @@ export function generateHTMLReport(summary: any, results: any[]): string {
 </html>`;
 }
 
-/**
- * Helper for severity numeric value
- */
-export function getSeverityValue(s: any): number {
-  if (s === Severity.Critical || s === 'critical') return 4;
-  if (s === Severity.Major || s === 'major') return 3;
-  if (s === Severity.Minor || s === 'minor') return 2;
-  if (s === Severity.Info || s === 'info') return 1;
-  return 0;
-}
-
-/**
- * Get colored severity badge for console output
- */
-export function getSeverityBadge(severity: Severity | string): string {
-  const val = getSeverityValue(severity);
-  switch (val) {
-    case 4:
-      return chalk.bgRed.white.bold(' CRITICAL ');
-    case 3:
-      return chalk.bgYellow.black.bold(' MAJOR ');
-    case 2:
-      return chalk.bgBlue.white.bold(' MINOR ');
-    case 1:
-      return chalk.bgCyan.black(' INFO ');
-    default:
-      return chalk.bgCyan.black(' INFO ');
-  }
-}
+// These are now standardized in @aiready/core
+export { getSeverityValue, getSeverityBadge };

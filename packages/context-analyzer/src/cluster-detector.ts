@@ -3,6 +3,10 @@ import { calculateFragmentation, calculateEnhancedCohesion } from './metrics';
 
 /**
  * Group files by domain to detect module clusters
+ * @param graph - The dependency graph to analyze
+ * @param options - Optional configuration options
+ * @param options.useLogScale - Whether to use logarithmic scaling for calculations
+ * @returns Array of module clusters
  */
 export function detectModuleClusters(
   graph: DependencyGraph,
@@ -19,6 +23,29 @@ export function detectModuleClusters(
   }
 
   const clusters: ModuleCluster[] = [];
+
+  const generateSuggestedStructure = (
+    files: string[],
+    tokens: number,
+    fragmentation: number
+  ) => {
+    const targetFiles = Math.max(1, Math.ceil(tokens / 10000));
+    const plan: string[] = [];
+
+    if (fragmentation > 0.5) {
+      plan.push(
+        `Consolidate ${files.length} files scattered across multiple directories into ${targetFiles} core module(s)`
+      );
+    }
+
+    if (tokens > 20000) {
+      plan.push(
+        `Domain logic is very large (${Math.round(tokens / 1000)}k tokens). Ensure clear sub-domain boundaries.`
+      );
+    }
+
+    return { targetFiles, consolidationPlan: plan };
+  };
 
   for (const [domain, files] of domainMap.entries()) {
     if (files.length < 2 || domain === 'unknown') continue;
