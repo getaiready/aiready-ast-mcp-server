@@ -17,6 +17,7 @@ describe('Doc Drift Scoring', () => {
       totalExports: 50,
       outdatedComments: 2,
       undocumentedComplexity: 1,
+      actualDrift: 0,
     },
     recommendations: [
       'Update or remove 2 outdated comments that contradict the code.',

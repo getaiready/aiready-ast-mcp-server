@@ -97,7 +97,7 @@ export default defineConfig(async ({ command }) => {
         // during dev resolve to source for HMR; during build use the built dist
         '@aiready/components': isDev
           ? componentsPath
-          : resolve(__dirname, '../../components/dist'),
+          : resolve(__dirname, '../../components/dist/index.js'),
       },
     },
   };

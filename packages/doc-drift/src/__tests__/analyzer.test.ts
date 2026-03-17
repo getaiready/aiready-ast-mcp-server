@@ -76,6 +76,7 @@ export function complexFunction(data: any) {
     expect(report.rawData.uncommentedExports).toBe(1);
     expect(report.rawData.outdatedComments).toBe(1);
     expect(report.rawData.undocumentedComplexity).toBe(1);
+    expect(report.rawData.actualDrift).toBe(0);
 
     expect(report.issues.length).toBeGreaterThan(0);
     expect(report.issues.some((i) => i.message.includes('b'))).toBe(true);

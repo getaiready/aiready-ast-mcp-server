@@ -16,28 +16,41 @@ export function calculateDocDriftScore(
     totalExports: rawData.totalExports,
     outdatedComments: rawData.outdatedComments,
     undocumentedComplexity: rawData.undocumentedComplexity,
+    actualDrift: rawData.actualDrift,
   });
 
   const factors: ToolScoringOutput['factors'] = [
     {
+      name: 'Undocumented Complexity',
+      impact: -Math.min(
+        50,
+        (rawData.undocumentedComplexity /
+          Math.max(1, rawData.totalExports) /
+          0.2) *
+          100 *
+          0.5
+      ),
+      description: `${rawData.undocumentedComplexity} complex functions lack docs (high risk)`,
+    },
+    {
+      name: 'Outdated/Incomplete Comments',
+      impact: -Math.min(
+        30,
+        (rawData.outdatedComments / Math.max(1, rawData.totalExports) / 0.4) *
+          100 *
+          0.3
+      ),
+      description: `${rawData.outdatedComments} functions with parameter-mismatch in docs`,
+    },
+    {
       name: 'Uncommented Exports',
       impact: -Math.min(
         20,
-        (rawData.uncommentedExports / Math.max(1, rawData.totalExports)) *
+        (rawData.uncommentedExports / Math.max(1, rawData.totalExports) / 0.8) *
           100 *
           0.2
       ),
       description: `${rawData.uncommentedExports} uncommented exports`,
-    },
-    {
-      name: 'Outdated Comments',
-      impact: -Math.min(60, rawData.outdatedComments * 15 * 0.6),
-      description: `${rawData.outdatedComments} outdated comments`,
-    },
-    {
-      name: 'Undocumented Complexity',
-      impact: -Math.min(20, rawData.undocumentedComplexity * 10 * 0.2),
-      description: `${rawData.undocumentedComplexity} complex functions lack docs`,
     },
   ];
 

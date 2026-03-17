@@ -21,6 +21,7 @@ describe('Doc Drift Provider', () => {
         totalExports: 5,
         outdatedComments: 0,
         undocumentedComplexity: 0,
+        actualDrift: 0,
       },
       recommendations: [],
     });

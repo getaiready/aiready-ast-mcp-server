@@ -24,6 +24,7 @@ export async function analyzeDocDrift(
   let totalExports = 0;
   let outdatedComments = 0;
   let undocumentedComplexity = 0;
+  let actualDrift = 0;
 
   const now = Math.floor(Date.now() / 1000);
 
@@ -76,7 +77,6 @@ export async function analyzeDocDrift(
             if (exp.type === 'function' && exp.parameters) {
               const params = exp.parameters;
               // Check if params mentioned in doc (standard @param or simple mention)
-              // Use regex with word boundaries to avoid partial matches (e.g. 'b' in 'numbers')
               const missingParams = params.filter((p) => {
                 const regex = new RegExp(`\\b${p}\\b`, 'i');
                 return !regex.test(docContent);
@@ -90,36 +90,39 @@ export async function analyzeDocDrift(
                   message: `Documentation mismatch: function parameters (${missingParams.join(', ')}) are not mentioned in the docs.`,
                   location: { file, line: exp.loc?.start.line || 1 },
                 });
-                continue;
               }
             }
 
-            // Timestamp comparison
-            if (exp.loc) {
+            // Timestamp comparison for temporal drift
+            if (exp.loc && doc.loc) {
               if (!fileLineStamps) {
                 fileLineStamps = getFileCommitTimestamps(file);
               }
 
-              // We don't have exact lines for the doc node in ExportInfo yet,
-              // but we know it precedes the export. Using export start as a proxy for drift check.
               const bodyModified = getLineRangeLastModifiedCached(
                 fileLineStamps,
                 exp.loc.start.line,
                 exp.loc.end.line
               );
 
-              if (bodyModified > 0) {
-                // If body was modified much later than the "stale" threshold
-                if (
-                  now - bodyModified < staleSeconds / 4 &&
-                  exp.documentation.isStale === true
-                ) {
-                  // This would require isStale to be set by the parser if it knew history
-                  // For now, we compare body modification vs current time if docs look very old (heuristic)
-                }
+              const docModified = getLineRangeLastModifiedCached(
+                fileLineStamps,
+                doc.loc.start.line,
+                doc.loc.end.line
+              );
 
-                // If the file itself is very old but has no issues, it's fine.
-                // Doc-drift is really about implementation changing without doc updates.
+              if (bodyModified > 0 && docModified > 0) {
+                // If body was modified more than 1 day AFTER the documentation
+                const DRIFT_THRESHOLD_SECONDS = 24 * 60 * 60;
+                if (bodyModified - docModified > DRIFT_THRESHOLD_SECONDS) {
+                  actualDrift++;
+                  issues.push({
+                    type: IssueType.DocDrift,
+                    severity: Severity.Major,
+                    message: `Documentation drift: logic was modified on ${new Date(bodyModified * 1000).toLocaleDateString()} but documentation was last updated on ${new Date(docModified * 1000).toLocaleDateString()}.`,
+                    location: { file, line: doc.loc.start.line },
+                  });
+                }
               }
             }
           }
@@ -136,6 +139,7 @@ export async function analyzeDocDrift(
     totalExports,
     outdatedComments,
     undocumentedComplexity,
+    actualDrift,
   });
 
   return {
@@ -151,6 +155,7 @@ export async function analyzeDocDrift(
       totalExports,
       outdatedComments,
       undocumentedComplexity,
+      actualDrift,
     },
     recommendations: riskResult.recommendations,
   };

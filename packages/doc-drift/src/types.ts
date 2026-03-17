@@ -50,6 +50,8 @@ export interface DocDriftReport {
     outdatedComments: number;
     /** Count of complex functions without sufficient documentation */
     undocumentedComplexity: number;
+    /** Number of functions where code changed after docs */
+    actualDrift: number;
   };
   /** AI-generated remediation advice */
   recommendations: string[];
