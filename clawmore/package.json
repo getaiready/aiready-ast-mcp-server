@@ -1,6 +1,6 @@
 {
   "name": "@aiready/clawmore",
-  "version": "0.1.20",
+  "version": "0.1.19",
   "private": true,
   "scripts": {
     "dev": "sst dev --stage local",
