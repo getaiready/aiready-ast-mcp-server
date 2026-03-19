@@ -90,7 +90,12 @@ export async function analyzeNamingGeneralized(
         } else if (exp.type === 'function') {
           pattern = conventions.functionPattern;
         } else if (exp.type === 'const') {
-          pattern = conventions.constantPattern;
+          // Only enforce SCREAMING_SNAKE_CASE for primitive constants (strings, numbers,
+          // booleans). Object literals, class instances, and tool definitions are
+          // camelCase by convention (e.g. `logger`, `githubTools`, `RemediationSwarm`).
+          pattern = exp.isPrimitive
+            ? conventions.constantPattern
+            : conventions.variablePattern;
         } else {
           pattern = conventions.variablePattern;
         }
