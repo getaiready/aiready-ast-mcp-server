@@ -2,6 +2,8 @@
  * Signal detection helpers for AI Signal Clarity.
  */
 
+import { classifyStringLiteral, StringCategory } from './string-classifier';
+
 export const AMBIGUOUS_NAME_PATTERNS = [
   /^[a-z]$/, // single letter: a, b, x, y
   /^(tmp|temp|data|obj|val|res|ret|result|item|elem|thing|stuff|info|misc|util|helper|handler|cb|fn|func)$/i,
@@ -110,6 +112,13 @@ export function isMagicString(value: string): boolean {
   if (DESCRIPTIVE_NAME_PATTERN.test(value)) return false;
   if (/[/.]/.test(value)) return false;
   if (/^#[0-9a-fA-F]{3,6}$/.test(value)) return false;
+
+  // Use the classifier to distinguish between meaningful and UI strings
+  const category = classifyStringLiteral(value);
+  // Only flag meaningful strings as magic literals, not UI display strings
+  if (category === StringCategory.UiDisplay) {
+    return false;
+  }
 
   return !/^\s+$/.test(value);
 }
