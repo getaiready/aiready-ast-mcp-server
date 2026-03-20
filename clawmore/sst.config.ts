@@ -148,6 +148,12 @@ export default $config({
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
         CLAW_MORE_BUS: bus.name,
+        GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || '',
+        GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+        AUTH_SECRET:
+          process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
       },
       permissions: [
         {
