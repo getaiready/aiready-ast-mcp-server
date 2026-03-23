@@ -112,12 +112,16 @@ export async function analyzeNamingGeneralized(
           )
             continue;
 
-          // Only enforce SCREAMING_SNAKE_CASE for primitive constants (strings, numbers,
-          // booleans). Object literals, class instances, and tool definitions are
-          // camelCase by convention (e.g. `logger`, `githubTools`, `RemediationSwarm`).
-          pattern = exp.isPrimitive
-            ? conventions.constantPattern
-            : conventions.variablePattern;
+          // Allow both SCREAMING_SNAKE_CASE and camelCase for exported constants.
+          // Module-level constants (config objects, paths, etc.) often use SCREAMING_SNAKE_CASE
+          // which is a valid convention for constants, regardless of whether they are primitives.
+          if (
+            conventions.constantPattern.test(exp.name) ||
+            conventions.variablePattern.test(exp.name)
+          ) {
+            continue;
+          }
+          pattern = conventions.constantPattern;
         } else {
           pattern = conventions.variablePattern;
         }

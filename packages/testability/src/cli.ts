@@ -88,28 +88,28 @@ EXAMPLES:
     } else {
       displayStandardConsoleReport({
         title: '🧪 Testability Analysis',
-        score: scoring.summary.score,
-        rating: scoring.summary.rating,
+        score: scoring.score,
+        rating: scoring.rating || report.summary.rating,
         dimensions: [
           {
             name: 'Test Coverage',
-            value: scoring.summary.dimensions.testCoverageRatio,
+            value: report.summary.dimensions.testCoverageRatio,
           },
           {
             name: 'Function Purity',
-            value: scoring.summary.dimensions.purityScore,
+            value: report.summary.dimensions.purityScore,
           },
           {
             name: 'Dependency Injection',
-            value: scoring.summary.dimensions.dependencyInjectionScore,
+            value: report.summary.dimensions.dependencyInjectionScore,
           },
           {
             name: 'Interface Focus',
-            value: scoring.summary.dimensions.interfaceFocusScore,
+            value: report.summary.dimensions.interfaceFocusScore,
           },
           {
             name: 'Observability',
-            value: scoring.summary.dimensions.observabilityScore,
+            value: report.summary.dimensions.observabilityScore,
           },
         ],
         stats: [
@@ -117,7 +117,7 @@ EXAMPLES:
           { label: 'Test Files', value: report.rawData.testFiles },
           {
             label: 'Coverage Ratio',
-            value: Math.round(scoring.summary.coverageRatio * 100) + '%',
+            value: Math.round(report.summary.coverageRatio * 100) + '%',
           },
         ],
         issues: report.issues,
