@@ -249,6 +249,14 @@ export async function POST(req: NextRequest) {
               ':now': new Date().toISOString(),
             },
           });
+
+          // Notify user about failed payment
+          const userEmail = userItem.email || userItem.GSI1SK;
+          const userName = userItem.name || 'there';
+          if (userEmail) {
+            sendPaymentFailedEmail(userEmail, userName).catch(console.error);
+          }
+
           console.log(
             `Marked payment failed for user ${userId} (${customerId})`
           );
@@ -324,6 +332,16 @@ export async function POST(req: NextRequest) {
               ':now': new Date().toISOString(),
             },
           });
+
+          // Notify user about cancellation
+          const userEmail = userItem.email || userItem.GSI1SK;
+          const userName = userItem.name || 'there';
+          if (userEmail) {
+            sendSubscriptionCancelledEmail(userEmail, userName).catch(
+              console.error
+            );
+          }
+
           console.log(
             `Downgraded user ${userId} to FREE plan after subscription cancellation`
           );

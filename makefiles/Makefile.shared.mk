@@ -92,8 +92,8 @@ verify-aws-account:
 		printf '  Found   : '"$$CURRENT_ACCOUNT"'\n'; \
 		printf '  Profile : $(AWS_PROFILE)\n'; \
 		exit 1; \
-	fi
-	@printf '$(GREEN)✓ AWS Account verified: $(AWS_PROFILE) ('"$$CURRENT_ACCOUNT"') matches $(EXPECTED_AWS_ACCOUNT_ID)$(RESET_COLOR)\n'
+	fi; \
+	printf '$(GREEN)✓ AWS Account verified: $(AWS_PROFILE) ('"$$CURRENT_ACCOUNT"') matches $(EXPECTED_AWS_ACCOUNT_ID)$(RESET_COLOR)\n'
 
 # Notifications (defaults for solo founder)
 SES_TO_EMAIL ?= caopengau@gmail.com
