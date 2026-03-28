@@ -1,6 +1,6 @@
 {
   "name": "@aiready/contract-enforcement",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Measures structural type safety and boundary validation to reduce fallback cascades for AI agents",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
