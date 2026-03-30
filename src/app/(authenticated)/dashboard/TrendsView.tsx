@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Analysis } from '@/lib/db';
 import { TrendChart } from '@/components/trends/TrendChart';
+import { fetchRepoHistory } from '@/lib/api/history';
 
 interface TrendsViewProps {
   repoId: string;
@@ -17,18 +18,9 @@ export function TrendsView({ repoId, repoName, onClose }: TrendsViewProps) {
 
   useEffect(() => {
     async function fetchHistory() {
-      try {
-        const res = await fetch(`/api/repos/${repoId}/history?limit=20`);
-        const data = await res.json();
-        if (res.ok) {
-          // Reverse for timeline (oldest to newest)
-          setHistory(data.analyses.reverse());
-        }
-      } catch (_err) {
-        console.error('Failed to fetch history:', _err);
-      } finally {
-        setLoading(false);
-      }
+      const data = await fetchRepoHistory(repoId, 20);
+      setHistory(data);
+      setLoading(false);
     }
     fetchHistory();
   }, [repoId]);

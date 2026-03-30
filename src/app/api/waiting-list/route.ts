@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { sendEmail } from '@/lib/email';
-
-const bucket = process.env.SUBMISSIONS_BUCKET;
-const s3 = new S3Client({});
-const sesToEmail = process.env.SES_TO_EMAIL || 'team@getaiready.dev';
+import { storeSubmissionAndNotify } from '@/lib/api/submissions';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,18 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!bucket) {
-      console.error('SUBMISSIONS_BUCKET environment variable is not set');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
     const now = new Date();
-    const id = `${now.toISOString()}_${Math.random().toString(36).slice(2, 8)}`;
-    const key = `waiting-list/${plan}/${id}.json`;
-
     const payload = {
       email,
       plan,
@@ -38,17 +22,6 @@ export async function POST(req: NextRequest) {
       source: 'platform-pricing',
     };
 
-    // Store in S3
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: JSON.stringify(payload, null, 2),
-        ContentType: 'application/json',
-      })
-    );
-
-    // Notify via SES
     const htmlBody = `
       <div style="font-family: sans-serif; padding: 20px; color: #333;">
         <h2 style="color: #0891b2;">New Waitlist Signup</h2>
@@ -60,18 +33,17 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    await sendEmail({
-      to: sesToEmail,
-      subject: `⏳ New Waitlist: ${plan} (${email})`,
-      htmlBody,
+    return await storeSubmissionAndNotify({
+      keyPrefix: `waiting-list/${plan}`,
+      payload,
+      emailSubject: `⏳ New Waitlist: ${plan} (${email})`,
+      emailHtmlBody: htmlBody,
+      errorContext: 'Waiting list',
     });
-
-    return NextResponse.json({ ok: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal Server Error';
     console.error('Waiting list error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

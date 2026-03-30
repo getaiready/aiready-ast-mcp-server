@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { sendEmail } from '@/lib/email';
 import { auth } from '@/lib/auth';
-
-const bucket = process.env.SUBMISSIONS_BUCKET;
-const s3 = new S3Client({});
-const sesToEmail = process.env.SES_TO_EMAIL || 'team@getaiready.dev';
+import { storeSubmissionAndNotify } from '@/lib/api/submissions';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,18 +15,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!bucket) {
-      console.error('SUBMISSIONS_BUCKET environment variable is not set');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
     const email = session?.user?.email || optionalEmail || 'Anonymous';
     const now = new Date();
-    const id = `${now.toISOString()}_${Math.random().toString(36).slice(2, 8)}`;
-    const key = `feedback/${id}.json`;
 
     const payload = {
       email,
@@ -41,17 +26,6 @@ export async function POST(req: NextRequest) {
       path: req.headers.get('referer'),
     };
 
-    // Store in S3
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: JSON.stringify(payload, null, 2),
-        ContentType: 'application/json',
-      })
-    );
-
-    // Notify via SES
     const htmlBody = `
       <div style="font-family: sans-serif; padding: 20px; color: #333;">
         <h2 style="color: #4f46e5;">New User Feedback</h2>
@@ -65,18 +39,17 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    await sendEmail({
-      to: sesToEmail,
-      subject: `📣 Feedback from ${email}`,
-      htmlBody,
+    return await storeSubmissionAndNotify({
+      keyPrefix: 'feedback',
+      payload,
+      emailSubject: `📣 Feedback from ${email}`,
+      emailHtmlBody: htmlBody,
+      errorContext: 'Feedback',
     });
-
-    return NextResponse.json({ ok: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal Server Error';
     console.error('Feedback error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
