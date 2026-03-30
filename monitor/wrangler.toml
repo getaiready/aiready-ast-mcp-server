@@ -1,0 +1,12 @@
+name = "aiready-platform-monitor"
+main = "../../../packages/core/src/monitoring/health-check.ts"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+PROJECT_NAME = "Platform"
+URL_TO_CHECK = "https://platform.getaiready.dev"
+SNS_TOPIC_ARN = "arn:aws:sns:ap-southeast-2:316759592139:aiready-health-alerts"
+AWS_REGION = "ap-southeast-2"
