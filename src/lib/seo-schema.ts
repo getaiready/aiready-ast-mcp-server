@@ -43,6 +43,8 @@ export const generateOrganizationSchema = () => {
       url: 'https://github.com/caopengau/aiready-cli/issues',
       availableLanguage: ['English'],
     },
+    privacyPolicy: `${LANDING_BASE_URL}/privacy`,
+    termsOfService: `${LANDING_BASE_URL}/terms`,
     keywords:
       'AI codebase optimization, semantic duplicate detection, context window analysis, code consistency, AI readiness, developer tools, static analysis',
   };
@@ -86,6 +88,8 @@ export const generateSoftwareApplicationSchema = () => {
     keywords:
       'AI readiness dashboard, codebase tracking, developer metrics, AI collaboration metrics',
     license: 'https://opensource.org/licenses/MIT',
+    privacyPolicy: `${LANDING_BASE_URL}/privacy`,
+    termsOfService: `${LANDING_BASE_URL}/terms`,
   };
 };
 

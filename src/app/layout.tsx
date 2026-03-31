@@ -10,6 +10,7 @@ import {
   PLATFORM_BASE_URL,
 } from '@/lib/seo-schema';
 import FeedbackWidget from '@/components/FeedbackWidget';
+import { Footer } from '@/components/Footer';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -114,6 +115,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {children}
+        <Footer />
         <Toaster position="bottom-right" theme="dark" richColors />
         <FeedbackWidget />
       </body>
