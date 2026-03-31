@@ -10,7 +10,13 @@ export async function GET(
     async (_req, _params) => {
       const { id } = await params;
       const repoId = id;
-      const repo = await getRepository(repoId);
+      let repo;
+      try {
+        repo = await getRepository(repoId);
+      } catch (err) {
+        console.error('Database error in Badge API:', err);
+        return { error: 'Repository not found (DB error)', status: 404 };
+      }
 
       if (!repo) {
         return { error: 'Repository not found', status: 404 };

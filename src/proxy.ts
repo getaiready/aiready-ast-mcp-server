@@ -7,8 +7,9 @@ const publicRoutes = ['/', '/login', '/metrics', '/terms', '/privacy'];
 // API routes that should be public
 const publicApiRoutes = ['/api/auth', '/api/agent', '/api/repos'];
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log(`[Middleware] Path: ${pathname}`);
   const authHeader = request.headers.get('Authorization');
 
   // Allow API requests with Bearer token

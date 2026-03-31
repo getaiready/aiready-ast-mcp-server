@@ -3,7 +3,10 @@
  * Optimized for AI search engines: ChatGPT, Perplexity, Claude, Gemini, etc.
  */
 
-export const PLATFORM_BASE_URL = 'https://platform.getaiready.dev';
+export const PLATFORM_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.AUTH_URL ||
+  'http://localhost:8888';
 export const LANDING_BASE_URL = 'https://getaiready.dev';
 
 export const generateOrganizationSchema = () => {
