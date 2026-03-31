@@ -127,13 +127,16 @@ export async function handler(event: SQSEvent) {
           githubToken: accessToken,
           openaiApiKey: process.env.OPENAI_API_KEY,
           anthropicApiKey: process.env.MINIMAX_API_KEY,
-          anthropicBaseUrl: 'https://api.minimax.io/anthropic',
+          anthropicBaseUrl: 'https://api.minimax.io/anthropic/v1',
           model: process.env.MINIMAX_MODEL || 'MiniMax-M2.7',
           expertFeedback,
           previousDiff,
         },
       });
 
+      console.log(
+        `[RemediationWorker] Executing RemediationSwarm for ${remediationId}...`
+      );
       const result = await withTimeout(
         executePromise,
         AGENT_TIMEOUT_MS,
