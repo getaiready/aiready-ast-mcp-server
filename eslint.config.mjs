@@ -13,6 +13,8 @@ const eslintConfig = [
       'next-env.d.ts',
       'sst-env.d.ts',
       'monitor/sst-env.d.ts',
+      'playwright-report/**',
+      'test-results/**',
     ],
   },
   ...nextVitals,
