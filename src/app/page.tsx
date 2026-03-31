@@ -264,6 +264,41 @@ export default function HomePage() {
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Footer */}
+        <footer className="w-full max-w-5xl mx-auto mt-20 pt-8 pb-12 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-slate-500">
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
+                AR
+              </div>
+              <span className="font-bold text-white tracking-wider uppercase text-xs">
+                AIReady Platform
+              </span>
+            </div>
+            <p>© {new Date().getFullYear()} AIReady. All rights reserved.</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-8">
+            <a
+              href="/privacy"
+              className="hover:text-cyan-400 transition-colors flex items-center gap-1"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="/terms"
+              className="hover:text-cyan-400 transition-colors flex items-center gap-1"
+            >
+              Terms of Service
+            </a>
+            <a
+              href="https://getaiready.dev"
+              className="hover:text-cyan-400 transition-colors flex items-center gap-1"
+            >
+              Main Site
+            </a>
+          </div>
+        </footer>
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 {
   "name": "@aiready/platform",
-  "version": "0.3.15",
+  "version": "0.3.17",
   "private": true,
   "scripts": {
     "dev": "sst dev --mode=mono --stage local",
