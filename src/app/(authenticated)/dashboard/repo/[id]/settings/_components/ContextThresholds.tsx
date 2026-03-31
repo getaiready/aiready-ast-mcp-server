@@ -25,7 +25,7 @@ export function ContextThresholds({
           accentColor="amber"
           tipTitle="Dependency Horizon"
           tipBody="How deep to follow import chains. Higher depth captures transitive complexity but increases context consumption."
-          onChange={(val) => updateConfig({ maxDepth: val })}
+          onChange={(newThreshold) => updateConfig({ maxDepth: newThreshold })}
         />
         <ThresholdSlider
           label="Min Cohesion Score"
@@ -37,7 +37,9 @@ export function ContextThresholds({
           accentColor="amber"
           tipTitle="Architectural Health"
           tipBody="Files below this target score are flagged as 'God Objects' or fragmented logic needing modularization."
-          onChange={(val) => updateConfig({ minCohesion: val })}
+          onChange={(newThreshold) =>
+            updateConfig({ minCohesion: newThreshold })
+          }
         />
       </div>
 
@@ -51,7 +53,9 @@ export function ContextThresholds({
           isPercentage
           accentColor="amber"
           tipBody="Threshold for logic dispersion. Higher values allow functionality to be more spread across the codebase before flagging."
-          onChange={(val) => updateConfig({ maxFragmentation: val })}
+          onChange={(newThreshold) =>
+            updateConfig({ maxFragmentation: newThreshold })
+          }
         />
 
         <div className="flex flex-col justify-end gap-4">
