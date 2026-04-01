@@ -18,11 +18,12 @@ check-pnpm:
 	fi
 
 check-node:
-	@if ! command -v node >/dev/null 2>&1; then \
-		$(call log_error,Node.js is not installed. Please install Node.js before continuing.); \
+	@NODE_VER=$$(node -v | cut -d. -f1 | sed 's/v//'); \
+	if [ "$$NODE_VER" != "24" ]; then \
+		$(call log_error,Unsupported Node.js version ($$(node -v)). Please use Node.js 24 (found in .nvmrc).); \
 		exit 1; \
 	else \
-		$(call log_success,Node.js is installed.); \
+		$(call log_success,Node.js 24 detected.); \
 	fi
 
 install: check-pnpm check-node ## Install all dependencies (workspace)

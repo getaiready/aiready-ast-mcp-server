@@ -8,7 +8,8 @@ include $(MAKEFILE_DIR)/Makefile.shared.mk
 .PHONY: test test-core test-pattern-detect test-watch test-coverage test-verify-cli test-contract test-integration \
 	test-landing-e2e test-platform-e2e test-platform test-landing test-platform-e2e-local test-landing-e2e-local \
 	test-visualizer test-vscode-extension test-downstream test-clawmore-e2e-local test-clawmore-e2e-prod \
-	test-clawmore-e2e-full test-clawmore-e2e-console test-clawmore-integration test-clawmore-contracts
+	test-clawmore-e2e-full test-clawmore-e2e-console test-clawmore-integration test-clawmore-contracts \
+	mcp-test-server mcp-test-ast
 
 test: ## Run tests for all packages (noninteractive)
 	@$(call log_step,Running tests for all packages (noninteractive)...) 
@@ -145,3 +146,13 @@ test-clawmore-contracts: ## Run ClawMore Hub-Spoke contract tests
 	@$(call log_step,Running ClawMore Hub-Spoke contract tests...)
 	@cd apps/clawmore && pnpm test lib/contracts/hub-spoke.test.ts
 	@$(call log_success,ClawMore contract tests passed)
+
+mcp-test-server: ## Verify @aiready/mcp-server protocol (requires build)
+	@$(call log_step,Verifying @aiready/mcp-server protocol...)
+	@node tooling/scripts/mcp-test.js packages/mcp-server/dist/index.js "pattern-detect" '{"path": "."}'
+	@$(call log_success,@aiready/mcp-server verified)
+
+mcp-test-ast: ## Verify @aiready/ast-mcp-server protocol (requires build)
+	@$(call log_step,Verifying @aiready/ast-mcp-server protocol...)
+	@node tooling/scripts/mcp-test.js packages/ast-mcp-server/dist/index.js "search_code" '{"pattern": "pnpm", "path": "."}'
+	@$(call log_success,@aiready/ast-mcp-server verified)

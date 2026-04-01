@@ -1,9 +1,24 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { rgPath } from '@vscode/ripgrep';
 
 const execFileAsync = promisify(execFile);
+
+// Robust rg path resolution using the built-in rgPath and fallback logic
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const resolvedRgPath =
+  rgPath ||
+  path.resolve(
+    __dirname,
+    '..',
+    'node_modules',
+    '@vscode',
+    'ripgrep',
+    'bin',
+    'rg'
+  );
 
 export interface SearchResult {
   file: string;
