@@ -4,7 +4,7 @@ import { validateWorkspacePath } from '../security.js';
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
-import { Node, ExportedDeclarations } from 'ts-morph';
+import { Node } from 'ts-morph';
 
 export interface SymbolEntry {
   name: string;
@@ -116,7 +116,7 @@ export class SymbolIndex {
             process.memoryUsage().heapUsed / 1024 / 1024
           );
         }
-      } catch (e) {
+      } catch {
         // Corrupt cache, ignore
       }
     }

@@ -68,11 +68,6 @@ export class WorkerPool {
     }
 
     // Return worker to pool
-    const worker = this.workers.find(
-      (w) =>
-        !this.available.includes(w) &&
-        ![...this.activeJobs.values()].some((t) => t.id === msg.id) // simplistic
-    );
     // properly finding the worker is tricky without storing mapping.
     // let's just make it simpler: each message comes from a worker, but we don't know which one.
     // Actually, worker.on('message') should be tied to the worker!
@@ -86,7 +81,7 @@ export class WorkerPool {
       const workerPath = path.join(__dirname, 'ast-worker.js');
       const newWorker = new Worker(workerPath);
       newWorker.on('message', (msg) => this.handleResult(msg));
-      newWorker.on('error', (e) => this.handleWorkerError(newWorker, e));
+      newWorker.on('error', (_e) => this.handleWorkerError(newWorker, _e));
       this.workers[idx] = newWorker;
       this.available.push(newWorker);
     }

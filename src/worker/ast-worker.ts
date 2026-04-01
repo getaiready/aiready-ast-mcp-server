@@ -1,6 +1,5 @@
 import { parentPort } from 'worker_threads';
 import { Project } from 'ts-morph';
-import { validateWorkspacePath } from '../security.js';
 
 const projects = new Map<string, Project>();
 
@@ -21,15 +20,6 @@ interface WorkerMessage {
   id: string;
   type: string;
   payload: any;
-}
-
-interface DefinitionLocation {
-  file: string;
-  line: number;
-  column: number;
-  kind: string;
-  snippet: string;
-  documentation?: string;
 }
 
 interface ReferenceLocation {

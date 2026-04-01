@@ -1,6 +1,4 @@
 import { typescriptAdapter } from '../adapters/typescript-adapter.js';
-import { projectManager } from '../project-manager.js';
-import { SyntaxKind } from 'ts-morph';
 import { DefinitionLocation } from '../types.js';
 
 export async function resolveDefinition(
