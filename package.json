@@ -41,7 +41,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "test-mcp": "node ../../tooling/scripts/mcp-test.js ./dist/index.js",
