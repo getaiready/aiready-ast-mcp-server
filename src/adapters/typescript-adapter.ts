@@ -14,8 +14,15 @@ import {
 import { projectManager } from '../project-manager.js';
 import { symbolIndex } from '../index/symbol-index.js';
 import { validateWorkspacePath } from '../security.js';
+import { WorkerPool } from '../worker/pool.js';
 
 export class TypeScriptAdapter {
+  private pool: WorkerPool;
+
+  constructor() {
+    const poolSize = parseInt(process.env.AST_WORKER_POOL_SIZE || '2');
+    this.pool = new WorkerPool(poolSize);
+  }
   public async resolveDefinition(
     symbolName: string,
     path: string
@@ -62,14 +69,28 @@ export class TypeScriptAdapter {
     const tsconfig = await projectManager.findNearestTsConfig(path);
     if (!tsconfig) return [];
 
-    const project = projectManager.ensureProject(tsconfig);
-    const sourceFile = project.addSourceFileAtPathIfExists(path);
-    if (!sourceFile) return [];
+    // Use worker pool for heavy ts-morph operations
+    try {
+      const result = await this.pool.execute<DefinitionLocation[]>(
+        'resolve_definition',
+        {
+          tsconfig,
+          file: path,
+          symbol: symbolName,
+        }
+      );
+      return result;
+    } catch {
+      // Fallback to main thread if worker fails
+      const project = projectManager.ensureProject(tsconfig);
+      const sourceFile = project.addSourceFileAtPathIfExists(path);
+      if (!sourceFile) return [];
 
-    const exported = sourceFile.getExportedDeclarations().get(symbolName);
-    if (!exported) return [];
+      const exported = sourceFile.getExportedDeclarations().get(symbolName);
+      if (!exported) return [];
 
-    return exported.map((decl) => this.mapToDefinitionLocation(decl as Node));
+      return exported.map((decl) => this.mapToDefinitionLocation(decl as Node));
+    }
   }
 
   public async findReferences(
@@ -113,12 +134,11 @@ export class TypeScriptAdapter {
         false
       );
       const filesToLoad = [...new Set(searchResults.map((r) => r.file))];
-      console.log('Search code files to load:', filesToLoad);
       for (const file of filesToLoad) {
         project.addSourceFileAtPathIfExists(file);
       }
     } catch (_e) {
-      // Ignore
+      // Ignore search failures - fallback to existing project files
     }
 
     const refSymbols = (targetNode as any).findReferences?.();
@@ -159,60 +179,79 @@ export class TypeScriptAdapter {
     const tsconfig = await projectManager.findNearestTsConfig(hit.file);
     if (!tsconfig) return { implementations: [], total_count: 0 };
 
-    const project = projectManager.ensureProject(tsconfig);
-    const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
-    if (!sourceFile) return { implementations: [], total_count: 0 };
-
-    const exported = sourceFile.getExportedDeclarations().get(symbolName);
-    if (!exported || exported.length === 0)
-      return { implementations: [], total_count: 0 };
-
-    const targetNode = exported[0];
-    if (
-      !Node.isClassDeclaration(targetNode) &&
-      !Node.isInterfaceDeclaration(targetNode)
-    ) {
-      return { implementations: [], total_count: 0 };
-    }
-
+    // Use worker pool for heavy ts-morph operations
     try {
-      const { searchCode } = await import('../tools/search-code.js');
-      const searchResults = await searchCode(
-        symbolName,
-        path,
-        '*.{ts,tsx,js,jsx}',
-        1000,
-        false
-      );
-      const filesToLoad = [...new Set(searchResults.map((r) => r.file))];
-      for (const file of filesToLoad) {
-        project.addSourceFileAtPathIfExists(file);
-      }
-    } catch (_e) {
-      // Ignore
-    }
+      const result = await this.pool.execute<{
+        implementations: ReferenceLocation[];
+        total_count: number;
+      }>('find_implementations', {
+        tsconfig,
+        file: hit.file,
+        symbol: symbolName,
+      });
 
-    const results: ReferenceLocation[] = [];
-    const implementations = (targetNode as any).getImplementations?.();
-    if (implementations) {
-      for (const impl of implementations) {
-        const sf = impl.getSourceFile();
-        const lc = sf.getLineAndColumnAtPos(impl.getTextSpan().getStart());
-        results.push({
-          file: sf.getFilePath(),
-          line: lc.line,
-          column: lc.column,
-          text:
-            impl.getNode().getParent()?.getText() || impl.getNode().getText(),
-        });
-      }
-    }
+      // Apply pagination
+      return {
+        implementations: result.implementations.slice(offset, offset + limit),
+        total_count: result.total_count,
+      };
+    } catch {
+      // Fallback to main thread if worker fails
+      const project = projectManager.ensureProject(tsconfig);
+      const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
+      if (!sourceFile) return { implementations: [], total_count: 0 };
 
-    const unique = this.deduplicateLocations(results);
-    return {
-      implementations: unique.slice(offset, offset + limit),
-      total_count: unique.length,
-    };
+      const exported = sourceFile.getExportedDeclarations().get(symbolName);
+      if (!exported || exported.length === 0)
+        return { implementations: [], total_count: 0 };
+
+      const targetNode = exported[0];
+      if (
+        !Node.isClassDeclaration(targetNode) &&
+        !Node.isInterfaceDeclaration(targetNode)
+      ) {
+        return { implementations: [], total_count: 0 };
+      }
+
+      try {
+        const { searchCode } = await import('../tools/search-code.js');
+        const searchResults = await searchCode(
+          symbolName,
+          path,
+          '*.{ts,tsx,js,jsx}',
+          1000,
+          false
+        );
+        const filesToLoad = [...new Set(searchResults.map((r) => r.file))];
+        for (const file of filesToLoad) {
+          project.addSourceFileAtPathIfExists(file);
+        }
+      } catch (_e) {
+        // Ignore search failures - fallback to existing project files
+      }
+
+      const results: ReferenceLocation[] = [];
+      const implementations = (targetNode as any).getImplementations?.();
+      if (implementations) {
+        for (const impl of implementations) {
+          const sf = impl.getSourceFile();
+          const lc = sf.getLineAndColumnAtPos(impl.getTextSpan().getStart());
+          results.push({
+            file: sf.getFilePath(),
+            line: lc.line,
+            column: lc.column,
+            text:
+              impl.getNode().getParent()?.getText() || impl.getNode().getText(),
+          });
+        }
+      }
+
+      const unique = this.deduplicateLocations(results);
+      return {
+        implementations: unique.slice(offset, offset + limit),
+        total_count: unique.length,
+      };
+    }
   }
 
   public async getFileStructure(
@@ -252,6 +291,10 @@ export class TypeScriptAdapter {
     };
 
     return structure;
+  }
+
+  public async shutdown(): Promise<void> {
+    await this.pool.terminate();
   }
 
   private mapToDefinitionLocation(node: Node): DefinitionLocation {
