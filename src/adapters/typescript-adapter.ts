@@ -1,26 +1,15 @@
-import {
-  Project,
-  SourceFile,
-  Node,
-  Symbol,
-  JSDoc,
-  Type,
-  SyntaxKind,
-} from 'ts-morph';
+import { Node } from 'ts-morph';
 import fs from 'fs';
 import {
   DefinitionLocation,
   ReferenceLocation,
   FileStructure,
   SymbolKind,
-  ImportInfo,
-  ExportInfo,
   ClassInfo,
   FunctionInfo,
   InterfaceInfo,
   TypeAliasInfo,
   EnumInfo,
-  JSDocTag,
 } from '../types.js';
 import { projectManager } from '../project-manager.js';
 import { symbolIndex } from '../index/symbol-index.js';
@@ -31,7 +20,7 @@ export class TypeScriptAdapter {
     symbolName: string,
     path: string
   ): Promise<DefinitionLocation[]> {
-    const safePath = validateWorkspacePath(path);
+    validateWorkspacePath(path);
 
     // Fast path: index lookup (O(1)) to find the file
     const indexHits = symbolIndex.lookup(symbolName);
@@ -66,15 +55,15 @@ export class TypeScriptAdapter {
     }
 
     // Fallback: search specific file via ts-morph (useful for local files without full index)
-    if (fs.statSync(safePath).isDirectory()) {
+    if (fs.statSync(path).isDirectory()) {
       return []; // Cannot load a directory as a single file
     }
 
-    const tsconfig = await projectManager.findNearestTsConfig(safePath);
+    const tsconfig = await projectManager.findNearestTsConfig(path);
     if (!tsconfig) return [];
 
     const project = projectManager.ensureProject(tsconfig);
-    const sourceFile = project.addSourceFileAtPathIfExists(safePath);
+    const sourceFile = project.addSourceFileAtPathIfExists(path);
     if (!sourceFile) return [];
 
     const exported = sourceFile.getExportedDeclarations().get(symbolName);
@@ -89,7 +78,7 @@ export class TypeScriptAdapter {
     limit: number = 50,
     offset: number = 0
   ): Promise<{ references: ReferenceLocation[]; total_count: number }> {
-    const safePath = validateWorkspacePath(path);
+    validateWorkspacePath(path);
 
     // Index lookup to find definition location
     const hits = symbolIndex.lookup(symbolName);
@@ -103,11 +92,6 @@ export class TypeScriptAdapter {
     const project = projectManager.ensureProject(tsconfig);
     const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
     if (!sourceFile) return { references: [], total_count: 0 };
-
-    // Find the node at the definition position
-    const node = sourceFile.getDescendantAtPos(
-      sourceFile.getLineAndColumnAtPos(hit.column).line // Wait, ts-morph getDescendantAtPos takes an absolute pos. hit.column is line pos? No, wait.
-    );
 
     // We need the actual node. Instead of calculating position from line/col, let's just find the exported declaration.
     const exported = sourceFile.getExportedDeclarations().get(symbolName);
@@ -133,8 +117,8 @@ export class TypeScriptAdapter {
       for (const file of filesToLoad) {
         project.addSourceFileAtPathIfExists(file);
       }
-    } catch (e) {
-      console.error('Search code failed:', e);
+    } catch (_e) {
+      // Ignore
     }
 
     const refSymbols = (targetNode as any).findReferences?.();
@@ -167,7 +151,7 @@ export class TypeScriptAdapter {
     limit: number = 50,
     offset: number = 0
   ): Promise<{ implementations: ReferenceLocation[]; total_count: number }> {
-    const safePath = validateWorkspacePath(path);
+    validateWorkspacePath(path);
     const hits = symbolIndex.lookup(symbolName);
     if (hits.length === 0) return { implementations: [], total_count: 0 };
 
@@ -204,7 +188,9 @@ export class TypeScriptAdapter {
       for (const file of filesToLoad) {
         project.addSourceFileAtPathIfExists(file);
       }
-    } catch (e) {}
+    } catch (_e) {
+      // Ignore
+    }
 
     const results: ReferenceLocation[] = [];
     const implementations = (targetNode as any).getImplementations?.();
@@ -246,7 +232,7 @@ export class TypeScriptAdapter {
         module: imp.getModuleSpecifierValue(),
         names: imp.getNamedImports().map((ni: any) => ni.getName()),
       })),
-      exports: sourceFile.getExportSymbols().map((sym: Symbol) => ({
+      exports: sourceFile.getExportSymbols().map((sym: any) => ({
         name: sym.getName(),
         kind: this.mapSymbolKind(sym),
       })),
@@ -295,7 +281,7 @@ export class TypeScriptAdapter {
     return 'variable';
   }
 
-  private mapSymbolKind(symbol: Symbol): SymbolKind {
+  private mapSymbolKind(symbol: any): SymbolKind {
     const decls = symbol.getDeclarations();
     if (decls.length > 0) return this.mapNodeToSymbolKind(decls[0]);
     return 'variable';

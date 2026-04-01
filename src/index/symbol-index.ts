@@ -54,7 +54,7 @@ export class SymbolIndex {
     duration_ms?: number,
     memory_mb?: number
   ): IndexingStats {
-    let files = Object.keys(cache.fileHashes).length;
+    const files = Object.keys(cache.fileHashes).length;
     let functions = 0;
     let classes = 0;
     let interfaces = 0;
