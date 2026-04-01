@@ -1,16 +1,19 @@
-import { typescriptAdapter } from '../adapters/typescript-adapter';
-import { projectManager } from '../project-manager';
-import { SyntaxKind } from 'ts-morph';
+import { typescriptAdapter } from '../adapters/typescript-adapter.js';
+import { projectManager } from '../project-manager.js';
+import { SyntaxKind, Node } from 'ts-morph';
 
-export async function getSymbolDocs(symbol: string, path: string) {
-  const projects = await projectManager.getProjectsForPath(path);
+export async function getSymbolDocs(
+  symbol: string,
+  filePath: string
+): Promise<any> {
+  const projects = await projectManager.getProjectsForPath(filePath);
 
   for (const project of projects) {
-    const sourceFiles = project.getSourceFiles();
-    for (const sourceFile of sourceFiles) {
+    const sourceFile = project.getSourceFile(filePath);
+    if (sourceFile) {
       const node = sourceFile
         .getDescendantsOfKind(SyntaxKind.Identifier)
-        .find((id) => id.getText() === symbol);
+        .find((id: Node) => id.getText() === symbol);
 
       if (node) {
         const decls = node.getSymbol()?.getDeclarations();

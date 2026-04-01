@@ -1,4 +1,4 @@
-import { typescriptAdapter } from '../adapters/typescript-adapter';
+import { typescriptAdapter } from '../adapters/typescript-adapter.js';
 
 export async function findImplementations(
   symbol: string,

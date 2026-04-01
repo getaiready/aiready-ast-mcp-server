@@ -1,5 +1,5 @@
-import { projectManager } from '../project-manager';
-import { IndexingStats } from '../types';
+import { projectManager } from '../project-manager.js';
+import { IndexingStats } from '../types.js';
 import os from 'os';
 
 export class SymbolIndex {

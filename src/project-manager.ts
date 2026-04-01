@@ -1,4 +1,4 @@
-import { Project, ProjectOptions, TSConfigResolver } from 'ts-morph';
+import { Project } from 'ts-morph';
 import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
