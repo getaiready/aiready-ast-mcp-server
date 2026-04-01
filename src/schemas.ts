@@ -49,10 +49,15 @@ export const GetFileStructureSchema = z.object({
  * Tool 5: search_code
  */
 export const SearchCodeSchema = z.object({
-  pattern: z.string().describe('Search pattern (regex)'),
+  pattern: z.string().describe('Search pattern (regex by default)'),
   path: z.string().describe('Directory to search in'),
   filePattern: z.string().optional().describe('Glob filter (e.g., "*.ts")'),
   limit: z.number().optional().default(50).describe('Max matches to return'),
+  regex: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Use regex mode (default true)'),
 });
 
 /**

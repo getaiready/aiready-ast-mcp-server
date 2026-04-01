@@ -7,6 +7,7 @@ import {
   Type,
   SyntaxKind,
 } from 'ts-morph';
+import fs from 'fs';
 import {
   DefinitionLocation,
   ReferenceLocation,
@@ -22,151 +23,225 @@ import {
   JSDocTag,
 } from '../types.js';
 import { projectManager } from '../project-manager.js';
+import { symbolIndex } from '../index/symbol-index.js';
+import { validateWorkspacePath } from '../security.js';
 
-/**
- * TypeScriptAdapter handles the actual ts-morph operations
- */
 export class TypeScriptAdapter {
-  /**
-   * Resolve definition of a symbol at a path
-   */
   public async resolveDefinition(
     symbolName: string,
     path: string
   ): Promise<DefinitionLocation[]> {
-    const projects = await projectManager.getProjectsForPath(path);
-    const results: DefinitionLocation[] = [];
+    const safePath = validateWorkspacePath(path);
 
-    for (const project of projects) {
-      const sourceFiles = project.getSourceFiles();
-      for (const sourceFile of sourceFiles) {
-        // Find nodes with the given name
-        const nodes = sourceFile
-          .getDescendantsOfKind(SyntaxKind.Identifier)
-          .filter((id: Node) => id.getText() === symbolName);
-
-        for (const node of nodes) {
-          const definitions = node.getDefinitionNodes();
-          for (const defNode of definitions) {
-            results.push(this.mapToDefinitionLocation(defNode));
+    // Fast path: index lookup (O(1)) to find the file
+    const indexHits = symbolIndex.lookup(symbolName);
+    if (indexHits.length > 0) {
+      const results: DefinitionLocation[] = [];
+      for (const hit of indexHits) {
+        const tsconfig = await projectManager.findNearestTsConfig(hit.file);
+        if (tsconfig) {
+          const project = projectManager.ensureProject(tsconfig);
+          const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
+          if (sourceFile) {
+            const exported = sourceFile
+              .getExportedDeclarations()
+              .get(symbolName);
+            if (exported && exported.length > 0) {
+              results.push(this.mapToDefinitionLocation(exported[0] as Node));
+              continue;
+            }
           }
         }
+        // Fallback if ts-morph loading fails for the hit
+        results.push({
+          file: hit.file,
+          line: hit.line,
+          column: hit.column,
+          kind: hit.kind,
+          snippet: '',
+          documentation: undefined,
+        });
       }
+      return results;
     }
 
-    // Deduplicate and return
-    return this.deduplicateLocations(results);
+    // Fallback: search specific file via ts-morph (useful for local files without full index)
+    if (fs.statSync(safePath).isDirectory()) {
+      return []; // Cannot load a directory as a single file
+    }
+
+    const tsconfig = await projectManager.findNearestTsConfig(safePath);
+    if (!tsconfig) return [];
+
+    const project = projectManager.ensureProject(tsconfig);
+    const sourceFile = project.addSourceFileAtPathIfExists(safePath);
+    if (!sourceFile) return [];
+
+    const exported = sourceFile.getExportedDeclarations().get(symbolName);
+    if (!exported) return [];
+
+    return exported.map((decl) => this.mapToDefinitionLocation(decl as Node));
   }
 
-  /**
-   * Find references to a symbol
-   */
   public async findReferences(
     symbolName: string,
     path: string,
     limit: number = 50,
     offset: number = 0
   ): Promise<{ references: ReferenceLocation[]; total_count: number }> {
-    const projects = await projectManager.getProjectsForPath(path);
+    const safePath = validateWorkspacePath(path);
+
+    // Index lookup to find definition location
+    const hits = symbolIndex.lookup(symbolName);
+    if (hits.length === 0) return { references: [], total_count: 0 };
+
+    // Load only the definition file
+    const hit = hits[0];
+    const tsconfig = await projectManager.findNearestTsConfig(hit.file);
+    if (!tsconfig) return { references: [], total_count: 0 };
+
+    const project = projectManager.ensureProject(tsconfig);
+    const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
+    if (!sourceFile) return { references: [], total_count: 0 };
+
+    // Find the node at the definition position
+    const node = sourceFile.getDescendantAtPos(
+      sourceFile.getLineAndColumnAtPos(hit.column).line // Wait, ts-morph getDescendantAtPos takes an absolute pos. hit.column is line pos? No, wait.
+    );
+
+    // We need the actual node. Instead of calculating position from line/col, let's just find the exported declaration.
+    const exported = sourceFile.getExportedDeclarations().get(symbolName);
+    if (!exported || exported.length === 0)
+      return { references: [], total_count: 0 };
+
+    const targetNode = exported[0];
+
+    // Hybrid approach: to prevent OOM, we don't load all files in the project.
+    // Instead, we use rg to find files that literally contain the symbol name,
+    // and only load those into ts-morph for accurate reference resolution.
+    try {
+      const { searchCode } = await import('../tools/search-code.js');
+      const searchResults = await searchCode(
+        symbolName,
+        path,
+        '*.{ts,tsx,js,jsx}',
+        1000,
+        false
+      );
+      const filesToLoad = [...new Set(searchResults.map((r) => r.file))];
+      console.log('Search code files to load:', filesToLoad);
+      for (const file of filesToLoad) {
+        project.addSourceFileAtPathIfExists(file);
+      }
+    } catch (e) {
+      console.error('Search code failed:', e);
+    }
+
+    const refSymbols = (targetNode as any).findReferences?.();
+    if (!refSymbols) return { references: [], total_count: 0 };
+
     const results: ReferenceLocation[] = [];
-
-    for (const project of projects) {
-      const sourceFiles = project.getSourceFiles();
-      for (const sourceFile of sourceFiles) {
-        const nodes = sourceFile
-          .getDescendantsOfKind(SyntaxKind.Identifier)
-          .filter((id) => id.getText() === symbolName);
-
-        for (const node of nodes) {
-          const referencedSymbols = node.findReferences();
-          for (const referencedSymbol of referencedSymbols) {
-            const references = referencedSymbol.getReferences();
-            for (const ref of references) {
-              const sourceFile = ref.getSourceFile();
-              const lineAndColumn = sourceFile.getLineAndColumnAtPos(
-                ref.getTextSpan().getStart()
-              );
-              results.push({
-                file: sourceFile.getFilePath(),
-                line: lineAndColumn.line,
-                column: lineAndColumn.column,
-                text:
-                  ref.getNode().getParent()?.getText() ||
-                  ref.getNode().getText(),
-              });
-            }
-          }
-        }
+    for (const refSymbol of refSymbols) {
+      for (const ref of refSymbol.getReferences()) {
+        const sf = ref.getSourceFile();
+        const lc = sf.getLineAndColumnAtPos(ref.getTextSpan().getStart());
+        results.push({
+          file: sf.getFilePath(),
+          line: lc.line,
+          column: lc.column,
+          text: ref.getNode().getParent()?.getText() || ref.getNode().getText(),
+        });
       }
     }
 
-    const uniqueResults = this.deduplicateLocations(results);
+    const unique = this.deduplicateLocations(results);
     return {
-      references: uniqueResults.slice(offset, offset + limit),
-      total_count: uniqueResults.length,
+      references: unique.slice(offset, offset + limit),
+      total_count: unique.length,
     };
   }
 
-  /**
-   * Find implementations for a symbol
-   */
   public async findImplementations(
     symbolName: string,
     path: string,
     limit: number = 50,
     offset: number = 0
   ): Promise<{ implementations: ReferenceLocation[]; total_count: number }> {
-    const projects = await projectManager.getProjectsForPath(path);
+    const safePath = validateWorkspacePath(path);
+    const hits = symbolIndex.lookup(symbolName);
+    if (hits.length === 0) return { implementations: [], total_count: 0 };
+
+    const hit = hits[0];
+    const tsconfig = await projectManager.findNearestTsConfig(hit.file);
+    if (!tsconfig) return { implementations: [], total_count: 0 };
+
+    const project = projectManager.ensureProject(tsconfig);
+    const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
+    if (!sourceFile) return { implementations: [], total_count: 0 };
+
+    const exported = sourceFile.getExportedDeclarations().get(symbolName);
+    if (!exported || exported.length === 0)
+      return { implementations: [], total_count: 0 };
+
+    const targetNode = exported[0];
+    if (
+      !Node.isClassDeclaration(targetNode) &&
+      !Node.isInterfaceDeclaration(targetNode)
+    ) {
+      return { implementations: [], total_count: 0 };
+    }
+
+    try {
+      const { searchCode } = await import('../tools/search-code.js');
+      const searchResults = await searchCode(
+        symbolName,
+        path,
+        '*.{ts,tsx,js,jsx}',
+        1000,
+        false
+      );
+      const filesToLoad = [...new Set(searchResults.map((r) => r.file))];
+      for (const file of filesToLoad) {
+        project.addSourceFileAtPathIfExists(file);
+      }
+    } catch (e) {}
+
     const results: ReferenceLocation[] = [];
-
-    for (const project of projects) {
-      const sourceFiles = project.getSourceFiles();
-      for (const sourceFile of sourceFiles) {
-        const nodes = sourceFile
-          .getDescendantsOfKind(SyntaxKind.Identifier)
-          .filter((id) => id.getText() === symbolName);
-
-        for (const node of nodes) {
-          const implementations = node.getImplementations();
-          for (const impl of implementations) {
-            const sourceFile = impl.getSourceFile();
-            const lineAndColumn = sourceFile.getLineAndColumnAtPos(
-              impl.getTextSpan().getStart()
-            );
-            results.push({
-              file: sourceFile.getFilePath(),
-              line: lineAndColumn.line,
-              column: lineAndColumn.column,
-              text:
-                impl.getNode().getParent()?.getText() ||
-                impl.getNode().getText(),
-            });
-          }
-        }
+    const implementations = (targetNode as any).getImplementations?.();
+    if (implementations) {
+      for (const impl of implementations) {
+        const sf = impl.getSourceFile();
+        const lc = sf.getLineAndColumnAtPos(impl.getTextSpan().getStart());
+        results.push({
+          file: sf.getFilePath(),
+          line: lc.line,
+          column: lc.column,
+          text:
+            impl.getNode().getParent()?.getText() || impl.getNode().getText(),
+        });
       }
     }
 
-    const uniqueResults = this.deduplicateLocations(results);
+    const unique = this.deduplicateLocations(results);
     return {
-      implementations: uniqueResults.slice(offset, offset + limit),
-      total_count: uniqueResults.length,
+      implementations: unique.slice(offset, offset + limit),
+      total_count: unique.length,
     };
   }
 
-  /**
-   * Get file structure overview
-   */
   public async getFileStructure(
     filePath: string
   ): Promise<FileStructure | undefined> {
-    const project = await projectManager.getProjectForFile(filePath);
-    if (!project) return undefined;
+    const safePath = validateWorkspacePath(filePath);
+    const tsconfig = await projectManager.findNearestTsConfig(safePath);
+    if (!tsconfig) return undefined;
 
-    const sourceFile = project.getSourceFile(filePath);
+    const project = projectManager.ensureProject(tsconfig);
+    const sourceFile = project.addSourceFileAtPathIfExists(safePath);
     if (!sourceFile) return undefined;
 
     const structure: FileStructure = {
-      file: filePath,
+      file: safePath,
       imports: sourceFile.getImportDeclarations().map((imp: any) => ({
         module: imp.getModuleSpecifierValue(),
         names: imp.getNamedImports().map((ni: any) => ni.getName()),
@@ -193,9 +268,6 @@ export class TypeScriptAdapter {
     return structure;
   }
 
-  /**
-   * Helper: Map ts-morph Node (Declaration) to DefinitionLocation
-   */
   private mapToDefinitionLocation(node: Node): DefinitionLocation {
     const sourceFile = node.getSourceFile();
     const lineAndColumn = sourceFile.getLineAndColumnAtPos(node.getStart());
@@ -210,9 +282,6 @@ export class TypeScriptAdapter {
     };
   }
 
-  /**
-   * Helper: Map ts-morph Node to SymbolKind
-   */
   private mapNodeToSymbolKind(node: Node): SymbolKind {
     if (Node.isClassDeclaration(node)) return 'class';
     if (Node.isFunctionDeclaration(node)) return 'function';
@@ -223,21 +292,15 @@ export class TypeScriptAdapter {
     if (Node.isMethodDeclaration(node)) return 'method';
     if (Node.isPropertyDeclaration(node)) return 'property';
     if (Node.isParameterDeclaration(node)) return 'parameter';
-    return 'variable'; // Default
+    return 'variable';
   }
 
-  /**
-   * Helper: Map Symbol to SymbolKind
-   */
   private mapSymbolKind(symbol: Symbol): SymbolKind {
     const decls = symbol.getDeclarations();
     if (decls.length > 0) return this.mapNodeToSymbolKind(decls[0]);
     return 'variable';
   }
 
-  /**
-   * Helper: Get JSDoc from Node
-   */
   private getJsDoc(node: Node): string | undefined {
     if (Node.isJSDocable(node)) {
       const docs = node.getJsDocs();
@@ -248,9 +311,6 @@ export class TypeScriptAdapter {
     return undefined;
   }
 
-  /**
-   * Helper: Get full JSDoc info (with tags)
-   */
   public getSymbolDocs(node: Node) {
     if (Node.isJSDocable(node)) {
       const docs = node.getJsDocs();
@@ -326,9 +386,6 @@ export class TypeScriptAdapter {
     };
   }
 
-  /**
-   * Helper: Deduplicate locations
-   */
   private deduplicateLocations<
     T extends { file: string; line: number; column: number },
   >(locations: T[]): T[] {

@@ -1,24 +1,9 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { rgPath } from '@vscode/ripgrep';
+import { validateWorkspacePath } from '../security.js';
 
 const execFileAsync = promisify(execFile);
-
-// Robust rg path resolution using the built-in rgPath and fallback logic
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const resolvedRgPath =
-  rgPath ||
-  path.resolve(
-    __dirname,
-    '..',
-    'node_modules',
-    '@vscode',
-    'ripgrep',
-    'bin',
-    'rg'
-  );
 
 export interface SearchResult {
   file: string;
@@ -31,16 +16,24 @@ export async function searchCode(
   pattern: string,
   searchPath: string,
   filePattern?: string,
-  limit: number = 50
+  limit: number = 50,
+  regex: boolean = true
 ): Promise<SearchResult[]> {
+  const safePath = validateWorkspacePath(searchPath);
+
   const args = [
     '--json',
     '--max-count',
     limit.toString(),
-    '--fixed-strings', // Default to fixed strings unless we want regex
-    pattern,
-    searchPath,
+    '--max-columns',
+    '500',
   ];
+
+  if (!regex) {
+    args.push('--fixed-strings');
+  }
+
+  args.push(pattern, safePath);
 
   if (filePattern) {
     args.push('--glob', filePattern);
