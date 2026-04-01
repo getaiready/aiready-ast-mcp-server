@@ -1,6 +1,47 @@
 # @aiready/ast-mcp-server
 
-AST-aware codebase exploration tools for Model Context Protocol.
+AST-aware codebase exploration tools for Model Context Protocol. Explore and navigate multi-project TypeScript/JavaScript codebases with high precision using AST and type information.
+
+## Installation & Distribution Channels
+
+You can install and use the AIReady AST MCP server through several supported channels.
+
+### 1. Dedicated MCP Registries
+
+- **[Smithery](https://smithery.ai/server/@aiready/ast-mcp-server)**: Discover and install our server directly via the Smithery CLI:
+  ```bash
+  npx @smithery/cli install @aiready/ast-mcp-server
+  ```
+- **[Glama](https://glama.ai/mcp/@aiready/ast-mcp-server)**: View our listing and integration options on the Glama directory.
+- **[Pulsar](https://gotopulsar.com)**: Find us on the Pulsar registry for MCP servers.
+
+### 2. Direct IDE / Assistant Integrations
+
+#### Claude Desktop App
+
+To use the AIReady AST MCP server in the Claude Desktop app, add the following configuration to your `claude_desktop_config.json`:
+
+```json
+"mcpServers": {
+  "aiready-ast": {
+    "command": "npx",
+    "args": ["-y", "@aiready/ast-mcp-server"]
+  }
+}
+```
+
+#### Cursor IDE
+
+1. Open Cursor Settings.
+2. Navigate to **Features** -> **MCP Servers**.
+3. Add a new server.
+4. Set the command to: `npx -y @aiready/ast-mcp-server`
+
+#### Windsurf IDE
+
+1. Open Windsurf Settings or local environment configuration.
+2. Add a new MCP Server integration.
+3. Configure the execution command: `npx -y @aiready/ast-mcp-server`
 
 ## Features
 
@@ -62,25 +103,10 @@ Build/Warm project-wide index.
 
 - `path`: Project root to index.
 
-## Installation
+## Quick Start
 
 ```bash
-npx -y @aiready/ast-mcp-server
-```
-
-## Configuration
-
-In your MCP client (e.g., Claude Desktop, Cursor, Windsurf):
-
-```json
-{
-  "mcpServers": {
-    "ast-explorer": {
-      "command": "npx",
-      "args": ["-y", "@aiready/ast-mcp-server"]
-    }
-  }
-}
+npx @aiready/ast-mcp-server
 ```
 
 ## Development
