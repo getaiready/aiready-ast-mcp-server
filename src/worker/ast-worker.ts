@@ -82,7 +82,12 @@ parentPort?.on('message', async (msg: WorkerMessage) => {
         }
 
         const targetNode = exported[0];
-        const refSymbols = (targetNode as any).findReferences?.();
+        const refSymbols =
+          'findReferences' in targetNode &&
+          typeof (targetNode as { findReferences?: () => unknown })
+            .findReferences === 'function'
+            ? (targetNode as { findReferences: () => unknown }).findReferences()
+            : undefined;
         if (!refSymbols) {
           result = { references: [], total_count: 0 };
           break;
@@ -129,7 +134,14 @@ parentPort?.on('message', async (msg: WorkerMessage) => {
         }
 
         const targetNode = exported[0];
-        const implementations = (targetNode as any).getImplementations?.();
+        const implementations =
+          'getImplementations' in targetNode &&
+          typeof (targetNode as { getImplementations?: () => unknown })
+            .getImplementations === 'function'
+            ? (
+                targetNode as { getImplementations: () => unknown }
+              ).getImplementations()
+            : undefined;
         if (!implementations) {
           result = { implementations: [], total_count: 0 };
           break;

@@ -141,7 +141,12 @@ export class TypeScriptAdapter {
       // Ignore search failures - fallback to existing project files
     }
 
-    const refSymbols = (targetNode as any).findReferences?.();
+    const refSymbols =
+      'findReferences' in targetNode &&
+      typeof (targetNode as { findReferences?: () => unknown })
+        .findReferences === 'function'
+        ? (targetNode as { findReferences: () => unknown }).findReferences()
+        : undefined;
     if (!refSymbols) return { references: [], total_count: 0 };
 
     const results: ReferenceLocation[] = [];
@@ -231,7 +236,14 @@ export class TypeScriptAdapter {
       }
 
       const results: ReferenceLocation[] = [];
-      const implementations = (targetNode as any).getImplementations?.();
+      const implementations =
+        'getImplementations' in targetNode &&
+        typeof (targetNode as { getImplementations?: () => unknown })
+          .getImplementations === 'function'
+          ? (
+              targetNode as { getImplementations: () => unknown }
+            ).getImplementations()
+          : undefined;
       if (implementations) {
         for (const impl of implementations) {
           const sf = impl.getSourceFile();
