@@ -143,9 +143,9 @@ export class TypeScriptAdapter {
 
     const refSymbols =
       'findReferences' in targetNode &&
-      typeof (targetNode as { findReferences?: () => unknown[] })
-        .findReferences === 'function'
-        ? (targetNode as { findReferences: () => unknown[] }).findReferences()
+      typeof (targetNode as { findReferences?: () => any[] }).findReferences ===
+        'function'
+        ? (targetNode as { findReferences: () => any[] }).findReferences()
         : undefined;
     if (!refSymbols) return { references: [], total_count: 0 };
 
@@ -238,10 +238,10 @@ export class TypeScriptAdapter {
       const results: ReferenceLocation[] = [];
       const implementations =
         'getImplementations' in targetNode &&
-        typeof (targetNode as { getImplementations?: () => unknown[] })
+        typeof (targetNode as { getImplementations?: () => any[] })
           .getImplementations === 'function'
           ? (
-              targetNode as { getImplementations: () => unknown[] }
+              targetNode as { getImplementations: () => any[] }
             ).getImplementations()
           : undefined;
       if (implementations) {
