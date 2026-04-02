@@ -287,9 +287,7 @@ export class TypeScriptAdapter {
         name: sym.getName(),
         kind: this.mapSymbolKind(sym),
       })),
-      classes: sourceFile
-        .getClasses()
-        .map((cls) => this.mapToClassInfo(cls)),
+      classes: sourceFile.getClasses().map((cls) => this.mapToClassInfo(cls)),
       functions: sourceFile
         .getFunctions()
         .map((fn) => this.mapToFunctionInfo(fn)),
@@ -373,57 +371,62 @@ export class TypeScriptAdapter {
     return {
       name: cls.getName() || 'anonymous',
       ...this.getSymbolDocs(cls),
-      methods: cls.getMethods().map((m) => this.mapToFunctionInfo(m)),
+      methods: cls.getMethods().map((m: any) => this.mapToFunctionInfo(m)),
       properties: cls
         .getProperties()
-        .map((p) => this.mapToPropertyInfo(p)),
+        .map((p: any) => this.mapToPropertyInfo(p)),
     };
   }
 
   private mapToFunctionInfo(fn: unknown): FunctionInfo {
     return {
-      name: ((fn as any)?.getName?.() || 'anonymous'),
-      ...this.getSymbolDocs(fn),
+      name: (fn as any)?.getName?.() || 'anonymous',
+      ...this.getSymbolDocs(fn as any),
       params: ((fn as any)?.getParameters?.() || []).map((p: any) => ({
         name: p.getName(),
         type: p.getType().getText(),
       })),
-      returnType: ((fn as any)?.getReturnType?.()?.getText?.() || 'unknown'),
+      returnType: (fn as any)?.getReturnType?.()?.getText?.() || 'unknown',
     };
   }
 
   private mapToPropertyInfo(p: unknown) {
     return {
-      name: ((p as any)?.getName?.() || 'unknown'),
-      type: ((p as any)?.getType?.()?.getText?.() || 'unknown'),
-      ...this.getSymbolDocs(p as Node),
+      name: (p as any)?.getName?.() || 'unknown',
+      type: (p as any)?.getType?.()?.getText?.() || 'unknown',
+      ...this.getSymbolDocs(p as any),
     };
   }
 
   private mapToInterfaceInfo(itf: unknown): InterfaceInfo {
     return {
-      name: ((itf as any)?.getName?.() || 'unknown'),
-      ...this.getSymbolDocs(itf as Node),
-      properties: ((itf as any)
-        .getProperties()
-        .map((p) => this.mapToPropertyInfo(p))) || [],
-      methods: (((itf as any)?.getMethods?.() || []).map((m) => this.mapToFunctionInfo(m))) || [],
+      name: (itf as any)?.getName?.() || 'unknown',
+      ...this.getSymbolDocs(itf as any),
+      properties:
+        ((itf as any).getProperties?.() || []).map((p: any) =>
+          this.mapToPropertyInfo(p)
+        ) || [],
+      methods:
+        ((itf as any)?.getMethods?.() || []).map((m: any) =>
+          this.mapToFunctionInfo(m)
+        ) || [],
     };
   }
 
   private mapToTypeAliasInfo(ta: unknown): TypeAliasInfo {
     return {
-      name: ((ta as any)?.getName?.() || 'unknown'),
-      type: ((ta as any)?.getType?.()?.getText?.() || 'unknown'),
+      name: (ta as any)?.getName?.() || 'unknown',
+      type: (ta as any)?.getType?.()?.getText?.() || 'unknown',
       ...this.getSymbolDocs(ta as Node),
     };
   }
 
   private mapToEnumInfo(enm: unknown): EnumInfo {
     return {
-      name: ((enm as any)?.getName?.() || 'unknown'),
+      name: (enm as any)?.getName?.() || 'unknown',
       ...this.getSymbolDocs(enm as Node),
-      members: (((enm as any)?.getMembers?.() || []).map((m: any) => m.getName())) || [],
+      members:
+        ((enm as any)?.getMembers?.() || []).map((m: any) => m.getName()) || [],
     };
   }
 
