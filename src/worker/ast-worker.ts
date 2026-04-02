@@ -84,9 +84,11 @@ parentPort?.on('message', async (msg: WorkerMessage) => {
         const targetNode = exported[0];
         const refSymbols =
           'findReferences' in targetNode &&
-          typeof (targetNode as { findReferences?: () => unknown })
+          typeof (targetNode as { findReferences?: () => unknown[] })
             .findReferences === 'function'
-            ? (targetNode as { findReferences: () => unknown }).findReferences()
+            ? (
+                targetNode as { findReferences: () => unknown[] }
+              ).findReferences()
             : undefined;
         if (!refSymbols) {
           result = { references: [], total_count: 0 };
@@ -136,10 +138,10 @@ parentPort?.on('message', async (msg: WorkerMessage) => {
         const targetNode = exported[0];
         const implementations =
           'getImplementations' in targetNode &&
-          typeof (targetNode as { getImplementations?: () => unknown })
+          typeof (targetNode as { getImplementations?: () => unknown[] })
             .getImplementations === 'function'
             ? (
-                targetNode as { getImplementations: () => unknown }
+                targetNode as { getImplementations: () => unknown[] }
               ).getImplementations()
             : undefined;
         if (!implementations) {
