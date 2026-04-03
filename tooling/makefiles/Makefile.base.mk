@@ -49,7 +49,7 @@ endef
 # Commit package.json changes and create an annotated tag.
 # Usage: $(call commit_and_tag,dir,display_name,tag_prefix)
 define commit_and_tag
-	version=$$(node -p "require('$(1)/package.json').version"); \
+	version=$$(node -p "require('$(ROOT_DIR)/$(1)/package.json').version"); \
 	$(call log_step,Committing $(2) v$$version...); \
 	cd $(ROOT_DIR) && git add . ; \
 	if git diff --staged --quiet; then \
