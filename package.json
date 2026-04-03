@@ -1,6 +1,6 @@
 {
   "name": "@aiready/ast-mcp-server",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "The AIReady AST-aware Model Context Protocol (MCP) Server. Explore and navigate multi-project TypeScript/JavaScript codebases with high precision using AST and type information.",
   "keywords": [
     "aiready",
