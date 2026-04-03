@@ -83,3 +83,15 @@ export const GetSymbolDocsSchema = z.object({
 export const BuildSymbolIndexSchema = z.object({
   path: z.string().describe('Project root directory to index'),
 });
+/**
+ * Tool 8: get_call_hierarchy
+ */
+export const GetCallHierarchySchema = z.object({
+  symbol: z.string().describe('Symbol name to find callers/callees for'),
+  path: z.string().describe('Project root directory'),
+  direction: z
+    .enum(['incoming', 'outgoing', 'both'])
+    .optional()
+    .default('both')
+    .describe('Direction of calls (default: both)'),
+});

@@ -12,6 +12,7 @@ import {
   SearchCodeSchema,
   GetSymbolDocsSchema,
   BuildSymbolIndexSchema,
+  GetCallHierarchySchema,
 } from './schemas.js';
 import { resolveDefinition } from './tools/resolve-definition.js';
 import { findReferences } from './tools/find-references.js';
@@ -20,6 +21,12 @@ import { getFileStructure } from './tools/get-file-structure.js';
 import { searchCode } from './tools/search-code.js';
 import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
+import { getCallHierarchy } from './tools/call-hierarchy.js';
+import { symbolIndex } from './index/symbol-index.js';
+import {
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * AST-aware Code Exploration MCP Server
@@ -37,6 +44,7 @@ export class ASTExplorerServer {
       {
         capabilities: {
           tools: {},
+          resources: {},
         },
       }
     );
@@ -49,6 +57,47 @@ export class ASTExplorerServer {
   }
 
   private setupHandlers() {
+    // List available resources
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return {
+        resources: [
+          {
+            uri: 'ast://file/symbols',
+            name: 'File Symbol List',
+            description: 'Get all symbols defined in a file.',
+            mimeType: 'application/json',
+          },
+        ],
+      };
+    });
+
+    // Read resource content
+    this.server.setRequestHandler(
+      ReadResourceRequestSchema,
+      async (request) => {
+        const { uri } = request.params;
+        const url = new URL(uri);
+
+        if (url.protocol === 'ast:' && url.pathname === '//file/symbols') {
+          const filePath = url.searchParams.get('path');
+          if (!filePath) throw new Error('Missing "path" parameter in URI');
+
+          const symbols = symbolIndex.lookupByFile(filePath);
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: JSON.stringify(symbols, null, 2),
+              },
+            ],
+          };
+        }
+
+        throw new Error(`Resource not found: ${uri}`);
+      }
+    );
+
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -151,6 +200,23 @@ export class ASTExplorerServer {
               required: ['path'],
             },
           },
+          {
+            name: 'get_call_hierarchy',
+            description: 'Find callers and callees for a symbol.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                symbol: { type: 'string', description: 'Symbol name' },
+                path: { type: 'string', description: 'Project root' },
+                direction: {
+                  type: 'string',
+                  enum: ['incoming', 'outgoing', 'both'],
+                  default: 'both',
+                },
+              },
+              required: ['symbol', 'path'],
+            },
+          },
         ],
       };
     });
@@ -233,6 +299,16 @@ export class ASTExplorerServer {
             const stats = await buildSymbolIndex(path);
             return {
               content: [{ type: 'text', text: JSON.stringify(stats, null, 2) }],
+            };
+          }
+          case 'get_call_hierarchy': {
+            const { symbol, path, direction } =
+              GetCallHierarchySchema.parse(args);
+            const hierarchy = await getCallHierarchy(symbol, path, direction);
+            return {
+              content: [
+                { type: 'text', text: JSON.stringify(hierarchy, null, 2) },
+              ],
             };
           }
           default:
