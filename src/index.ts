@@ -13,6 +13,7 @@ import {
   GetSymbolDocsSchema,
   BuildSymbolIndexSchema,
   GetCallHierarchySchema,
+  CheckSymbolGroundingSchema,
 } from './schemas.js';
 import { resolveDefinition } from './tools/resolve-definition.js';
 import { findReferences } from './tools/find-references.js';
@@ -22,6 +23,7 @@ import { searchCode } from './tools/search-code.js';
 import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
 import { getCallHierarchy } from './tools/call-hierarchy.js';
+import { checkSymbolGrounding } from './tools/check-symbol-grounding.js';
 import { symbolIndex } from './index/symbol-index.js';
 import {
   ListResourcesRequestSchema,
@@ -206,13 +208,26 @@ export class ASTExplorerServer {
             inputSchema: {
               type: 'object',
               properties: {
-                symbol: { type: 'string', description: 'Symbol name' },
-                path: { type: 'string', description: 'Project root' },
+                symbol: { type: 'string' },
+                path: { type: 'string' },
                 direction: {
                   type: 'string',
-                  enum: ['incoming', 'outgoing', 'both'],
-                  default: 'both',
+                  enum: ['incoming', 'outgoing'],
+                  default: 'outgoing',
                 },
+              },
+              required: ['symbol', 'path'],
+            },
+          },
+          {
+            name: 'check_symbol_grounding',
+            description:
+              "Assess a symbol's AI grounding quality (docs, type clarity, depth).",
+            inputSchema: {
+              type: 'object',
+              properties: {
+                symbol: { type: 'string' },
+                path: { type: 'string' },
               },
               required: ['symbol', 'path'],
             },
@@ -308,6 +323,15 @@ export class ASTExplorerServer {
             return {
               content: [
                 { type: 'text', text: JSON.stringify(hierarchy, null, 2) },
+              ],
+            };
+          }
+          case 'check_symbol_grounding': {
+            const { symbol, path } = CheckSymbolGroundingSchema.parse(args);
+            const result = await checkSymbolGrounding(symbol, path);
+            return {
+              content: [
+                { type: 'text', text: JSON.stringify(result, null, 2) },
               ],
             };
           }

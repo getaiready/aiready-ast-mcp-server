@@ -95,3 +95,10 @@ export const GetCallHierarchySchema = z.object({
     .default('both')
     .describe('Direction of calls (default: both)'),
 });
+/**
+ * Tool 9: check_symbol_grounding
+ */
+export const CheckSymbolGroundingSchema = z.object({
+  symbol: z.string().describe('Symbol name to assess grounding for'),
+  path: z.string().describe('Project root directory'),
+});
