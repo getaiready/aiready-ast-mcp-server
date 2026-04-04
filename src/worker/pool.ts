@@ -26,7 +26,7 @@ export class WorkerPool {
     for (let i = 0; i < this.poolSize; i++) {
       const worker = new Worker(workerPath);
       worker.on('message', (msg) => this.handleResult(msg));
-      worker.on('error', (err) => this.handleWorkerError(worker, err));
+      worker.on('error', (_err) => this.handleWorkerError(worker, _err));
       this.workers.push(worker);
       this.available.push(worker);
     }
