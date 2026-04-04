@@ -7,6 +7,7 @@ describe('findReferences', () => {
   const fixturePath = path.resolve(__dirname, 'fixtures/simple-project');
 
   beforeAll(async () => {
+    process.env.AST_DISABLE_CACHE = 'true';
     await buildSymbolIndex(fixturePath);
   });
 

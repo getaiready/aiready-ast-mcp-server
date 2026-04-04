@@ -25,7 +25,7 @@ export class WorkerPool {
 
     for (let i = 0; i < this.poolSize; i++) {
       const worker = new Worker(workerPath);
-      worker.on('message', (msg) => this.handleResult(msg));
+      worker.on('message', (msg) => this.handleResult(worker, msg));
       worker.on('error', (_err) => this.handleWorkerError(worker, _err));
       this.workers.push(worker);
       this.available.push(worker);
@@ -51,11 +51,14 @@ export class WorkerPool {
     worker.postMessage({ id: task.id, type: task.type, payload: task.payload });
   }
 
-  private handleResult(msg: {
-    id: string;
-    result?: unknown;
-    error?: string;
-  }): void {
+  private handleResult(
+    worker: Worker,
+    msg: {
+      id: string;
+      result?: unknown;
+      error?: string;
+    }
+  ): void {
     const task = this.activeJobs.get(msg.id);
     if (!task) return;
 
@@ -67,10 +70,13 @@ export class WorkerPool {
       task.resolve(msg.result);
     }
 
-    // Return worker to pool
-    // properly finding the worker is tricky without storing mapping.
-    // let's just make it simpler: each message comes from a worker, but we don't know which one.
-    // Actually, worker.on('message') should be tied to the worker!
+    // Return worker to pool or dispatch next task
+    const nextTask = this.queue.shift();
+    if (nextTask) {
+      this.dispatch(worker, nextTask);
+    } else {
+      this.available.push(worker);
+    }
   }
 
   private handleWorkerError(worker: Worker, err: Error): void {
@@ -80,7 +86,7 @@ export class WorkerPool {
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
       const workerPath = path.join(__dirname, 'ast-worker.js');
       const newWorker = new Worker(workerPath);
-      newWorker.on('message', (msg) => this.handleResult(msg));
+      newWorker.on('message', (msg) => this.handleResult(newWorker, msg));
       newWorker.on('error', (_e) => this.handleWorkerError(newWorker, _e));
       this.workers[idx] = newWorker;
       this.available.push(newWorker);

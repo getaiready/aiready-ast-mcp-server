@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   validateWorkspacePath,
   resolveWorkspaceRoot,
+  validateFileExists,
 } from '../src/security.js';
 import path from 'path';
+import fs from 'fs';
 
 describe('security', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -51,5 +53,30 @@ describe('security', () => {
     expect(() => validateWorkspacePath('/workspace/src/in\0dex.ts')).toThrow(
       /null bytes/
     );
+  });
+
+  describe('validateFileExists', () => {
+    beforeEach(() => {
+      process.env.AST_WORKSPACE_ROOT = '/workspace';
+    });
+
+    it('should throw if file does not exist', () => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      expect(() => validateFileExists('/workspace/missing.ts')).toThrow(
+        /File not found/
+      );
+    });
+
+    it('should throw if path is a directory', () => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({ isFile: () => false } as any);
+      expect(() => validateFileExists('/workspace/dir')).toThrow(/Not a file/);
+    });
+
+    it('should return path if it is a valid file', () => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({ isFile: () => true } as any);
+      expect(validateFileExists('/workspace/file.ts')).toContain('file.ts');
+    });
   });
 });

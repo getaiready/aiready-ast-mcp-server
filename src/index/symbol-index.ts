@@ -103,7 +103,7 @@ export class SymbolIndex {
     const safeRoot = validateWorkspacePath(rootDir);
     const cachePath = this.getCachePath(safeRoot);
 
-    if (fs.existsSync(cachePath)) {
+    if (fs.existsSync(cachePath) && process.env.AST_DISABLE_CACHE !== 'true') {
       try {
         const cached: DiskCache = JSON.parse(
           fs.readFileSync(cachePath, 'utf-8')

@@ -152,7 +152,7 @@ export class TypeScriptAdapter {
       const searchResults = await searchCode(
         symbolName,
         path,
-        '*.{ts,tsx,js,jsx}',
+        '**/*.{ts,tsx,js,jsx}',
         1000,
         false
       );
@@ -160,6 +160,7 @@ export class TypeScriptAdapter {
       for (const file of filesToLoad) {
         project.addSourceFileAtPathIfExists(file);
       }
+      project.resolveSourceFileDependencies();
     } catch (_e) {
       // Ignore search failures - fallback to existing project files
     }
@@ -247,7 +248,7 @@ export class TypeScriptAdapter {
         const searchResults = await searchCode(
           symbolName,
           path,
-          '*.{ts,tsx,js,jsx}',
+          '**/*.{ts,tsx,js,jsx}',
           1000,
           false
         );
