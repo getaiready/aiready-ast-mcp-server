@@ -45,7 +45,9 @@
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "test-mcp": "node ../../tooling/scripts/mcp-test.js ./dist/index.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.1",
