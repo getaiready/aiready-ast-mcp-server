@@ -23,6 +23,7 @@ This Model Context Protocol (MCP) server provides high-precision, AST-aware tool
 | `get_file_structure`   | Return a structural tree of a file (classes, methods, enums).   |
 | `search_code`          | Blazingly fast regex search via bundled ripgrep.                |
 | `get_symbol_docs`      | Extract full JSDoc/TSDoc metadata for any symbol.               |
+| `get_call_hierarchy`   | Find callers and callees for a symbol (incoming/outgoing).      |
 | `build_symbol_index`   | Warm the disk cache for a project (highly recommended).         |
 
 ## 📦 Installation
