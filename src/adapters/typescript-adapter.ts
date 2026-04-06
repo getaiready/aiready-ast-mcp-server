@@ -137,13 +137,6 @@ export class TypeScriptAdapter {
     const sourceFile = project.addSourceFileAtPathIfExists(hit.file);
     if (!sourceFile) return { references: [], total_count: 0 };
 
-    // We need the actual node. Instead of calculating position from line/col, let's just find the exported declaration.
-    const exported = sourceFile.getExportedDeclarations().get(symbolName);
-    if (!exported || exported.length === 0)
-      return { references: [], total_count: 0 };
-
-    const targetNode = exported[0];
-
     // Hybrid approach: to prevent OOM, we don't load all files in the project.
     // Instead, we use rg to find files that literally contain the symbol name,
     // and only load those into ts-morph for accurate reference resolution.
@@ -164,6 +157,14 @@ export class TypeScriptAdapter {
     } catch (_e) {
       // Ignore search failures - fallback to existing project files
     }
+
+    // We need the actual node. Instead of calculating position from line/col, let's just find the exported declaration.
+    // IMPORTANT: Re-get source file or ensure it's up to date after resolving dependencies if needed.
+    const exported = sourceFile.getExportedDeclarations().get(symbolName);
+    if (!exported || exported.length === 0)
+      return { references: [], total_count: 0 };
+
+    const targetNode = exported[0];
 
     const refSymbols =
       'findReferences' in targetNode &&
