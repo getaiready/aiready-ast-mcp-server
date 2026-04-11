@@ -7,20 +7,29 @@ import { validateWorkspacePath } from '../security.js';
 
 const execFileAsync = promisify(execFile);
 
+export interface CodebaseAuditFinding {
+  expected: string;
+  actual: string;
+  severity: 'P0' | 'P1' | 'P2' | 'P3';
+  recommendation: string;
+}
+
 export interface CodebaseAuditResult {
   debtMarkers: number;
   emptyDirs: string[];
   orphanedFiles: string[];
+  findings: CodebaseAuditFinding[];
 }
 
 /**
- * Performs a codebase-level audit for technical debt and bloat.
+ * Performs a codebase-level audit for technical debt and metabolic waste.
  * Uses ripgrep for fast searching of TODO/FIXME markers.
  */
 export async function codebaseAudit(
   rootDir: string
 ): Promise<CodebaseAuditResult> {
   const safePath = validateWorkspacePath(rootDir);
+  const findings: CodebaseAuditFinding[] = [];
 
   // 1. Count Debt Markers (TODO/FIXME)
   let debtMarkers = 0;
@@ -55,7 +64,17 @@ export async function codebaseAudit(
     }
   }
 
-  // 2. Identify Empty Directories
+  if (debtMarkers > 20) {
+    findings.push({
+      expected: 'Codebase should have minimal technical debt markers (< 20)',
+      actual: `Found ${debtMarkers} TODO/FIXME markers in the core codebase.`,
+      severity: 'P3',
+      recommendation:
+        'Schedule a session to address or recycle technical debt markers.',
+    });
+  }
+
+  // 2. Identify Empty Directories (Metabolic Waste)
   const emptyDirs: string[] = [];
   const scanEmpty = (dir: string) => {
     const files = fs.readdirSync(dir);
@@ -78,7 +97,16 @@ export async function codebaseAudit(
   };
   scanEmpty(safePath);
 
-  // 3. Heuristic: Orphaned Files
+  if (emptyDirs.length > 0) {
+    findings.push({
+      expected: 'No empty directories in the project structure',
+      actual: `Found ${emptyDirs.length} empty directories (metabolic waste).`,
+      severity: 'P3',
+      recommendation: `Remove empty directories: ${emptyDirs.slice(0, 3).join(', ')}${emptyDirs.length > 3 ? '...' : ''}`,
+    });
+  }
+
+  // 3. Heuristic: Orphaned Files (Dead Cells)
   // Finds files that are not imported or mentioned by any other file
   const orphanedFiles: string[] = [];
   const allFiles: string[] = [];
@@ -144,9 +172,19 @@ export async function codebaseAudit(
     }
   }
 
+  if (orphanedFiles.length > 0) {
+    findings.push({
+      expected: 'All files should be referenced or serve a clear purpose',
+      actual: `Found ${orphanedFiles.length} potentially orphaned files (dead cells).`,
+      severity: 'P2',
+      recommendation: `Audit and remove orphaned files: ${orphanedFiles.slice(0, 3).join(', ')}${orphanedFiles.length > 3 ? '...' : ''}`,
+    });
+  }
+
   return {
     debtMarkers,
     emptyDirs,
     orphanedFiles,
+    findings,
   };
 }

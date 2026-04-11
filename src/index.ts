@@ -235,9 +235,23 @@ export class ASTExplorerServer {
             },
           },
           {
-            name: 'codebase_audit',
+            name: 'metabolism_audit',
             description:
-              'Performs a codebase-level audit for technical debt (TODOs) and bloat (empty dirs, orphans).',
+              'Performs a codebase-level audit for technical debt (TODOs) and metabolic waste (empty dirs, orphans).',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: {
+                  type: 'string',
+                  description: 'Project root directory to audit',
+                },
+              },
+              required: ['path'],
+            },
+          },
+          {
+            name: 'codebase_audit',
+            description: 'Alias for metabolism_audit.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -352,6 +366,7 @@ export class ASTExplorerServer {
               ],
             };
           }
+          case 'metabolism_audit':
           case 'codebase_audit': {
             const { path } = CodebaseAuditSchema.parse(args);
             const result = await codebaseAudit(path);
@@ -359,6 +374,7 @@ export class ASTExplorerServer {
               content: [
                 { type: 'text', text: JSON.stringify(result, null, 2) },
               ],
+              metadata: result, // Important for serverlessclaw
             };
           }
           default:
