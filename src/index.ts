@@ -14,6 +14,7 @@ import {
   BuildSymbolIndexSchema,
   GetCallHierarchySchema,
   CheckSymbolGroundingSchema,
+  CodebaseAuditSchema,
 } from './schemas.js';
 import { resolveDefinition } from './tools/resolve-definition.js';
 import { findReferences } from './tools/find-references.js';
@@ -24,6 +25,7 @@ import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
 import { getCallHierarchy } from './tools/call-hierarchy.js';
 import { checkSymbolGrounding } from './tools/check-symbol-grounding.js';
+import { codebaseAudit } from './tools/codebase-audit.js';
 import { symbolIndex } from './index/symbol-index.js';
 import {
   ListResourcesRequestSchema,
@@ -232,6 +234,21 @@ export class ASTExplorerServer {
               required: ['symbol', 'path'],
             },
           },
+          {
+            name: 'codebase_audit',
+            description:
+              'Performs a codebase-level audit for technical debt (TODOs) and bloat (empty dirs, orphans).',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: {
+                  type: 'string',
+                  description: 'Project root directory to audit',
+                },
+              },
+              required: ['path'],
+            },
+          },
         ],
       };
     });
@@ -329,6 +346,15 @@ export class ASTExplorerServer {
           case 'check_symbol_grounding': {
             const { symbol, path } = CheckSymbolGroundingSchema.parse(args);
             const result = await checkSymbolGrounding(symbol, path);
+            return {
+              content: [
+                { type: 'text', text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          case 'codebase_audit': {
+            const { path } = CodebaseAuditSchema.parse(args);
+            const result = await codebaseAudit(path);
             return {
               content: [
                 { type: 'text', text: JSON.stringify(result, null, 2) },

@@ -102,3 +102,12 @@ export const CheckSymbolGroundingSchema = z.object({
   symbol: z.string().describe('Symbol name to assess grounding for'),
   path: z.string().describe('Project root directory'),
 });
+
+/**
+ * Tool 10: codebase_audit
+ */
+export const CodebaseAuditSchema = z.object({
+  path: z
+    .string()
+    .describe('Project root directory to audit for debt and bloat'),
+});
