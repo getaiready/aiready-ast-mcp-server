@@ -25,7 +25,6 @@ import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
 import { getCallHierarchy } from './tools/call-hierarchy.js';
 import { checkSymbolGrounding } from './tools/check-symbol-grounding.js';
-import { codebaseAudit } from './tools/codebase-audit.js';
 import { symbolIndex } from './index/symbol-index.js';
 import {
   ListResourcesRequestSchema,
@@ -235,9 +234,9 @@ export class ASTExplorerServer {
             },
           },
           {
-            name: 'metabolism_audit',
+            name: 'hygiene_audit',
             description:
-              'Performs a codebase-level audit for technical debt (TODOs) and metabolic waste (empty dirs, orphans).',
+              'Performs a codebase-level hygiene check for technical debt (TODOs) and waste (empty dirs, orphans).',
             inputSchema: {
               type: 'object',
               properties: {
@@ -250,15 +249,23 @@ export class ASTExplorerServer {
             },
           },
           {
-            name: 'codebase_audit',
-            description: 'Alias for metabolism_audit.',
+            name: 'metabolism_audit',
+            description: 'Alias for hygiene_audit (Serverless Claw compat).',
             inputSchema: {
               type: 'object',
               properties: {
-                path: {
-                  type: 'string',
-                  description: 'Project root directory to audit',
-                },
+                path: { type: 'string' },
+              },
+              required: ['path'],
+            },
+          },
+          {
+            name: 'codebase_audit',
+            description: 'Alias for hygiene_audit.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: { type: 'string' },
               },
               required: ['path'],
             },
@@ -366,15 +373,39 @@ export class ASTExplorerServer {
               ],
             };
           }
+          case 'hygiene_audit':
           case 'metabolism_audit':
           case 'codebase_audit': {
-            const { path } = CodebaseAuditSchema.parse(args);
-            const result = await codebaseAudit(path);
+            const { path: rootDir } = CodebaseAuditSchema.parse(args);
+            // Dynamic import of the new hygiene-audit package logic
+            const { HygieneAuditProvider } =
+              await import('@aiready/hygiene-audit');
+            const provider = new HygieneAuditProvider();
+            const result = await provider.analyze({ rootDir });
+
+            // Map ScanResult back to the flat structure serverlessclaw expects in metadata
+            const metadata = {
+              debtMarkers: result.metadata?.debtMarkers || 0,
+              emptyDirs: result.metadata?.emptyDirs || [],
+              orphanedFiles: result.metadata?.orphanedFiles || [],
+              findings: result.issues.map((i) => ({
+                expected: i.recommendation,
+                actual: i.message,
+                severity:
+                  i.severity === 'critical'
+                    ? 'P0'
+                    : i.severity === 'major'
+                      ? 'P1'
+                      : 'P2',
+                recommendation: i.recommendation,
+              })),
+            };
+
             return {
               content: [
                 { type: 'text', text: JSON.stringify(result, null, 2) },
               ],
-              metadata: result, // Important for serverlessclaw
+              metadata,
             };
           }
           default:
