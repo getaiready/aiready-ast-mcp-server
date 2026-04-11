@@ -51,6 +51,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@aiready/hygiene-audit": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@vscode/ripgrep": "^1.17.1",
     "glob": "^13.0.6",
