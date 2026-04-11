@@ -384,12 +384,13 @@ export class ASTExplorerServer {
             const result = await provider.analyze({ rootDir });
 
             // Map ScanResult back to the flat structure serverlessclaw expects in metadata
+            const allIssues = result.results.flatMap((r) => r.issues);
             const metadata = {
               debtMarkers: result.metadata?.debtMarkers || 0,
               emptyDirs: result.metadata?.emptyDirs || [],
               orphanedFiles: result.metadata?.orphanedFiles || [],
-              findings: result.issues.map((i) => ({
-                expected: i.recommendation,
+              findings: allIssues.map((i: any) => ({
+                expected: i.recommendation || i.suggestion || '',
                 actual: i.message,
                 severity:
                   i.severity === 'critical'
@@ -397,7 +398,7 @@ export class ASTExplorerServer {
                     : i.severity === 'major'
                       ? 'P1'
                       : 'P2',
-                recommendation: i.recommendation,
+                recommendation: i.recommendation || i.suggestion || '',
               })),
             };
 
