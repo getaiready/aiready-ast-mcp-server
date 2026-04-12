@@ -8,6 +8,7 @@ describe('findReferences', () => {
   const fixturePath = path.resolve(__dirname, 'fixtures/simple-project');
 
   beforeAll(async () => {
+    process.env.AST_DISABLE_CACHE = 'true';
     await buildSymbolIndex(fixturePath);
   });
 
@@ -17,7 +18,6 @@ describe('findReferences', () => {
       fixturePath
     )) as { references: ReferenceLocation[]; total_count: number };
     expect(total_count).toBeGreaterThan(0);
-    console.log('References:', references);
     expect(references.some((ref) => ref.file.includes('index.ts'))).toBe(true);
   });
 

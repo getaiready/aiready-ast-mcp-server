@@ -1,4 +1,4 @@
-import { add } from './utils.js';
+import { add } from './utils';
 
 /**
  * Main application class
