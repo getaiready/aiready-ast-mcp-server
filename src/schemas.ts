@@ -46,7 +46,43 @@ export const GetFileStructureSchema = z.object({
 });
 
 /**
- * Tool 5: search_code
+ * Tool 5: grep_search
+ */
+export const GrepSearchSchema = z.object({
+  pattern: z.string().describe('Search pattern (regex by default)'),
+  path: z.string().describe('Directory to search in'),
+  include: z
+    .array(z.string())
+    .optional()
+    .describe('Include only these glob patterns (e.g., ["*.ts", "src/**"])'),
+  exclude: z
+    .array(z.string())
+    .optional()
+    .describe('Exclude these glob patterns (e.g., ["**/*.test.ts"])'),
+  limit: z
+    .number()
+    .optional()
+    .default(50)
+    .describe('Max matches to return (default 50)'),
+  offset: z
+    .number()
+    .optional()
+    .default(0)
+    .describe('Pagination offset (default 0)'),
+  context: z
+    .number()
+    .optional()
+    .default(2)
+    .describe('Number of context lines before and after (default 2)'),
+  isRegex: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Use regex mode (default true)'),
+});
+
+/**
+ * Tool 6: search_code (legacy alias for grep_search)
  */
 export const SearchCodeSchema = z.object({
   pattern: z.string().describe('Search pattern (regex by default)'),

@@ -10,6 +10,7 @@ import {
   FindImplementationsSchema,
   GetFileStructureSchema,
   SearchCodeSchema,
+  GrepSearchSchema,
   GetSymbolDocsSchema,
   BuildSymbolIndexSchema,
   GetCallHierarchySchema,
@@ -21,6 +22,7 @@ import { findReferences } from './tools/find-references.js';
 import { findImplementations } from './tools/find-implementations.js';
 import { getFileStructure } from './tools/get-file-structure.js';
 import { searchCode } from './tools/search-code.js';
+import { grepSearch } from '@aiready/core';
 import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
 import { getCallHierarchy } from './tools/call-hierarchy.js';
@@ -165,8 +167,36 @@ export class ASTExplorerServer {
             },
           },
           {
+            name: 'grep_search',
+            description:
+              'Fast, context-aware text search via ripgrep. Supports context lines and result summarization.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                pattern: { type: 'string', description: 'Search pattern' },
+                path: { type: 'string', description: 'Directory to search' },
+                include: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Glob filter',
+                },
+                exclude: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Exclusion filter',
+                },
+                limit: { type: 'number', default: 50 },
+                offset: { type: 'number', default: 0 },
+                context: { type: 'number', default: 2 },
+                isRegex: { type: 'boolean', default: true },
+              },
+              required: ['pattern', 'path'],
+            },
+          },
+          {
             name: 'search_code',
-            description: 'Fast regex search via bundled ripgrep.',
+            description:
+              'Fast regex search via bundled ripgrep (alias for grep_search).',
             inputSchema: {
               type: 'object',
               properties: {
@@ -323,20 +353,48 @@ export class ASTExplorerServer {
               ],
             };
           }
+          case 'grep_search': {
+            const {
+              pattern,
+              path,
+              include,
+              exclude,
+              limit,
+              offset,
+              context,
+              isRegex,
+            } = GrepSearchSchema.parse(args);
+            const result = await grepSearch({
+              pattern,
+              path,
+              include,
+              exclude,
+              limit,
+              offset,
+              context,
+              isRegex,
+            });
+            return {
+              content: [
+                { type: 'text', text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
           case 'search_code': {
             const { pattern, path, filePattern, limit, offset, regex } =
               SearchCodeSchema.parse(args);
-            const results = await searchCode(
+            const result = await grepSearch({
               pattern,
               path,
-              filePattern,
+              include: filePattern ? [filePattern] : [],
               limit,
-              regex,
-              offset
-            );
+              offset,
+              isRegex: regex,
+              context: 0,
+            });
             return {
               content: [
-                { type: 'text', text: JSON.stringify(results, null, 2) },
+                { type: 'text', text: JSON.stringify(result, null, 2) },
               ],
             };
           }
