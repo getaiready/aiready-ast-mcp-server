@@ -79,7 +79,7 @@ export class WorkerPool {
     }
   }
 
-  private handleWorkerError(worker: Worker, err: unknown): void {
+  private handleWorkerError(worker: Worker, _err: unknown): void {
     const idx = this.workers.indexOf(worker);
     if (idx !== -1) {
       worker.terminate();

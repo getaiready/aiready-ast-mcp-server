@@ -21,7 +21,6 @@ import { resolveDefinition } from './tools/resolve-definition.js';
 import { findReferences } from './tools/find-references.js';
 import { findImplementations } from './tools/find-implementations.js';
 import { getFileStructure } from './tools/get-file-structure.js';
-import { searchCode } from './tools/search-code.js';
 import { grepSearch } from '@aiready/core';
 import { getSymbolDocs } from './tools/get-symbol-docs.js';
 import { buildSymbolIndex } from './tools/build-symbol-index.js';
