@@ -22,10 +22,10 @@ describe('findReferences', () => {
   });
 
   it('should find references to a class', async () => {
-    const { total_count } = (await findReferences(
-      'App',
-      fixturePath
-    )) as { references: ReferenceLocation[]; total_count: number };
+    const { total_count } = (await findReferences('App', fixturePath)) as {
+      references: ReferenceLocation[];
+      total_count: number;
+    };
     expect(total_count).toBeGreaterThan(0);
   });
 });
